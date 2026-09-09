@@ -20,36 +20,22 @@ function getTransporter() {
 
   if (!transporter) {
     const isGmail = host.toLowerCase().includes('gmail');
-    const port = rawPort ? parseInt(rawPort, 10) : 465;
+    const port = rawPort ? parseInt(rawPort, 10) : 587;
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
-    const transportConfig = isGmail
-      ? {
-          service: 'gmail',
-          auth: { user, pass },
-          pool: true,
-          maxConnections: 5,
-          maxMessages: 100,
-          connectionTimeout: 20000,
-          greetingTimeout: 20000,
-          socketTimeout: 30000,
-          tls: { rejectUnauthorized: false },
-        }
-      : {
-          host,
-          port,
-          secure,
-          auth: { user, pass },
-          pool: true,
-          maxConnections: 5,
-          maxMessages: 100,
-          connectionTimeout: 20000,
-          greetingTimeout: 20000,
-          socketTimeout: 30000,
-          tls: { rejectUnauthorized: false },
-        };
-
-    transporter = nodemailer.createTransport(transportConfig);
+    transporter = nodemailer.createTransport({
+      host: isGmail ? 'smtp.gmail.com' : host,
+      port,
+      secure,
+      auth: { user, pass },
+      family: 4, // CRITICAL: Force IPv4 resolution on Render containers to fix IPv6 socket timeout
+      connectionTimeout: 12000,
+      greetingTimeout: 12000,
+      socketTimeout: 15000,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
   }
 
   return transporter;
@@ -80,11 +66,38 @@ async function logEmail(recipient, subject, eventType, status, errorMessage = nu
 /**
  * Single Mail Utility function to send HTML emails asynchronously with automatic retries.
  */
-async function sendMail({ to, subject, html, text, eventType = 'general', metadata = {}, retries = 2 }) {
+async function sendMail({ to, subject, html, text, eventType = 'general', metadata = {}, retries = 1 }) {
   const recipient = to || process.env.ADMIN_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || process.env.SMTP_USER;
   if (!recipient) {
     console.warn('⚠️ No email recipient specified — skipping sendMail');
     return { sent: false, reason: 'no_recipient' };
+  }
+
+  // 1. HTTP API Direct Delivery (Resend API fallback if RESEND_API_KEY is configured)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const from = process.env.SMTP_FROM || 'RC Battleground <onboarding@resend.dev>';
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from,
+          to: [recipient],
+          subject,
+          html,
+        }),
+      });
+      const data = await resendRes.json();
+      if (resendRes.ok) {
+        await logEmail(recipient, subject, eventType, 'sent', null, { ...metadata, messageId: data.id, provider: 'resend' });
+        return { sent: true, messageId: data.id };
+      }
+    } catch (resendErr) {
+      console.warn('Resend API failed, falling back to SMTP:', resendErr.message);
+    }
   }
 
   const transport = getTransporter();
