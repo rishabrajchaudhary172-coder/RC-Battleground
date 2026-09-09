@@ -1,0 +1,12 @@
+{
+  "name": "rc-battleground",
+  "version": "1.0.0",
+  "description": "RC Battleground Full-Stack E-Commerce Platform",
+  "scripts": {
+    "dev": "node start-dev.js",
+    "start": "node start-dev.js",
+    "client": "npm --prefix client run dev",
+    "server": "npm --prefix server start",
+    "seed": "npm --prefix server run seed"
+  }
+}

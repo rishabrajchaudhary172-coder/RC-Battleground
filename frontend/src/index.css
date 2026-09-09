@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  
+  html.dark body {
+    @apply bg-black text-zinc-100 min-h-screen font-sans;
+  }
+
+  html.light body {
+    @apply bg-slate-50 text-slate-900 min-h-screen font-sans;
+  }
+
+  body {
+    @apply bg-black text-zinc-100 min-h-screen font-sans transition-colors duration-300;
+  }
+}
+
+/* Light Theme Overrides */
+html.light {
+  color-scheme: light;
+}
+
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Header & Navbar Light Mode Contrast */
+html.light header,
+html.light .nav-header,
+html.light .bg-black\/95,
+html.light .bg-black\/90,
+html.light .bg-black\/80 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .bg-black {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-zinc-950 {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-zinc-900 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .border-zinc-800,
+html.light .border-zinc-900 {
+  border-color: #cbd5e1 !important;
+}
+
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+html.light .text-zinc-100,
+html.light .text-zinc-200,
+html.light .text-zinc-300 {
+  color: #1e293b !important;
+}
+
+html.light .text-zinc-400,
+html.light .text-zinc-500 {
+  color: #475569 !important;
+}
+
+/* PRESERVED BRIGHT WHITE TEXT (#ffffff) OVER DARK HERO OVERLAYS & BANNERS */
+html.light .keep-white,
+html.light .keep-white h1,
+html.light .keep-white h2,
+html.light .keep-white h3,
+html.light .keep-white p,
+html.light [class*="from-black"] h1,
+html.light [class*="from-black"] h2,
+html.light [class*="from-black"] h3,
+html.light [class*="from-black"] p,
+html.light [class*="via-black"] p,
+html.light .hero-dark-overlay h1,
+html.light .hero-dark-overlay p {
+  color: #ffffff !important;
+}
+
+html.light .keep-white .text-zinc-300,
+html.light [class*="from-black"] .text-zinc-300,
+html.light [class*="via-black"] .text-zinc-300 {
+  color: #e2e8f0 !important;
+}
+
+html.light .keep-white .text-zinc-400,
+html.light [class*="from-black"] .text-zinc-400 {
+  color: #cbd5e1 !important;
+}
+
+/* FIX 1: HERO CTA BUTTONS MUST HAVE BOLD BLACK TEXT ON SOLID WHITE BUTTON BACKGROUND (NO BLANK WHITE RECTANGLES) */
+html.light .keep-white a,
+html.light .keep-white button,
+html.light [class*="from-black"] a,
+html.light [class*="from-black"] button {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+html.light .keep-white a *,
+html.light .keep-white button *,
+html.light [class*="from-black"] a *,
+html.light [class*="from-black"] button * {
+  color: #000000 !important;
+}
+
+/* FIX 2: CATEGORY BADGES ON IMAGES MUST STAY BRIGHT WHITE TEXT ON DARK BADGE CHIPS (NO DARK NAVY TEXT ON BLACK) */
+html.light .absolute.bg-zinc-950\/90,
+html.light .absolute[class*="bg-zinc-9"],
+html.light .absolute[class*="bg-black"],
+html.light span[class*="bg-zinc-950"],
+html.light span[class*="bg-zinc-900"],
+html.light .category-badge {
+  background-color: rgba(9, 9, 11, 0.92) !important;
+  border-color: #3f3f46 !important;
+  color: #ffffff !important;
+}
+
+html.light .absolute.bg-zinc-950\/90 *,
+html.light .absolute[class*="bg-zinc-9"] *,
+html.light .absolute[class*="bg-black"] *,
+html.light span[class*="bg-zinc-950"] *,
+html.light span[class*="bg-zinc-900"] *,
+html.light .category-badge * {
+  color: #ffffff !important;
+}
+
+/* Square Brand Logo Box contrast fix in light mode */
+html.light .brand-logo-box {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+html.light .mono-card {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light .mono-btn-primary {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+html.light .mono-btn-secondary {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .mono-input {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Custom Scrollbar for sleek monochrome aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Card & Border Utilities */
+.mono-card {
+  @apply bg-zinc-950 border border-zinc-800 rounded-none transition-all duration-200 hover:border-zinc-500;
+}
+
+.mono-btn-primary {
+  @apply bg-white text-black font-semibold px-5 py-2.5 rounded-none uppercase tracking-wider text-xs transition-all duration-200 hover:bg-zinc-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.mono-btn-secondary {
+  @apply bg-black text-white border border-zinc-700 font-semibold px-5 py-2.5 rounded-none uppercase tracking-wider text-xs transition-all duration-200 hover:bg-zinc-900 hover:border-zinc-400 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.mono-input {
+  @apply bg-zinc-900 border border-zinc-800 text-white px-4 py-2.5 rounded-none text-sm focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all placeholder:text-zinc-500;
+}
+
+/* Force left padding on inputs with icons to prevent text/icon overlap */
+.mono-input.pl-9,
+.mono-input.pl-10,
+.mono-input.pl-11,
+input.pl-8,
+input.pl-9,
+input.pl-10,
+input.pl-11 {
+  padding-left: 2.75rem !important;
+}
+
+.mono-badge {
+  @apply inline-flex items-center px-2.5 py-1 text-xs font-mono font-semibold uppercase tracking-wider border;
+}
+
+/* Cinematic Upward GT3 RS Drift Movement Keyframes */
+@keyframes gt3UpwardDrift {
+  0% {
+    transform: translate(-140%, 140%) scale(0.6) rotate(-25deg);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-70%, 70%) scale(0.8) rotate(-15deg);
+    opacity: 1;
+  }
+  45% {
+    transform: translate(-10%, -10%) scale(1.0) rotate(-5deg);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(60%, -80%) scale(1.2) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(180%, -180%) scale(1.4) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+.animate-gt3-upward {
+  animation: gt3UpwardDrift 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes backToFrontZoom {
+  0% {
+    transform: scale(1.15);
+    filter: brightness(0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(0.9);
+  }
+  100% {
+    transform: scale(1.0);
+    filter: brightness(1.1);
+  }
+}
+
+.animate-back-to-front {
+  animation: backToFrontZoom 4s ease-out infinite alternate;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1deg);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
