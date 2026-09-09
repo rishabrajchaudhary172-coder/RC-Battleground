@@ -51,6 +51,24 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'RC Battleground REST API Server', timestamp: new Date() });
 });
 
+// Serve compiled React Client (client/dist) for full-stack deployment
+const fs = require('fs');
+const clientDistPath = path.join(__dirname, '../../client/dist');
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+const activeDistPath = fs.existsSync(clientDistPath) ? clientDistPath : (fs.existsSync(frontendDistPath) ? frontendDistPath : null);
+
+if (activeDistPath) {
+  app.use(express.static(activeDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(activeDistPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: '🏎️ RC Battleground API Server Live!', health: '/api/health' });
+  });
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err);
