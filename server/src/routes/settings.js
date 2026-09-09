@@ -55,7 +55,7 @@ router.put('/exchange-rate', authenticateToken, requireAdmin, async (req, res) =
 router.get('/email', authenticateToken, requireAdmin, async (_req, res) => {
   res.json({
     smtp_configured: !!(process.env.SMTP_HOST && process.env.SMTP_USER),
-    admin_email: process.env.ADMIN_EMAIL || process.env.SMTP_USER || '',
+    admin_email: process.env.ADMIN_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || process.env.SMTP_USER || '',
     notifications_enabled: process.env.EMAIL_NOTIFICATIONS !== 'false',
   });
 });
