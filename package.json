@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node start-dev.js",
     "start": "node start-dev.js",
+    "build": "npm --prefix server install && npm --prefix client install && npm --prefix client run build",
     "client": "npm --prefix client run dev",
     "server": "npm --prefix server start",
     "seed": "npm --prefix server run seed"
