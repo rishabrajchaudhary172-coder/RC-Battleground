@@ -9,8 +9,7 @@ let transporter = null;
  */
 function getTransporter() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+  const rawPort = process.env.SMTP_PORT;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
@@ -20,15 +19,37 @@ function getTransporter() {
   }
 
   if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: { user, pass },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    const isGmail = host.toLowerCase().includes('gmail');
+    const port = rawPort ? parseInt(rawPort, 10) : 465;
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
+    const transportConfig = isGmail
+      ? {
+          service: 'gmail',
+          auth: { user, pass },
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 100,
+          connectionTimeout: 20000,
+          greetingTimeout: 20000,
+          socketTimeout: 30000,
+          tls: { rejectUnauthorized: false },
+        }
+      : {
+          host,
+          port,
+          secure,
+          auth: { user, pass },
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 100,
+          connectionTimeout: 20000,
+          greetingTimeout: 20000,
+          socketTimeout: 30000,
+          tls: { rejectUnauthorized: false },
+        };
+
+    transporter = nodemailer.createTransport(transportConfig);
   }
 
   return transporter;

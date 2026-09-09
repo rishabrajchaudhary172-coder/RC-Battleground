@@ -214,15 +214,15 @@ router.post('/checkout', authenticateToken, async (req, res) => {
       metadata: { order_id: order.id, order_number: orderNumber }
     });
 
-    // Send Buyer Confirmation Email
+    // Send Buyer Confirmation Email (staggered slightly to avoid socket collision)
     if (buyer.email) {
-      setImmediate(() => {
+      setTimeout(() => {
         sendMail({
           to: buyer.email,
           ...emailPayload,
           metadata: { order_id: order.id }
         }).catch((e) => console.error('Buyer order email error:', e.message));
-      });
+      }, 500);
     }
 
     res.status(201).json({
