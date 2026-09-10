@@ -58,17 +58,9 @@ export default function AuthModal({ isOpen, onClose }) {
       if (isRegister) {
         const fullPhone = getFullPhone();
         const payload = { ...formData, phone: fullPhone };
-        const res = await register(payload);
-        if (res && res.requires_verification) {
-          setVerificationEmail(res.email || formData.email);
-          if (res.otp_code) {
-            setOtpCode(res.otp_code);
-          }
-          setVerificationMsg(res.message || 'A 6-digit code has been generated. Enter it below to complete registration.');
-          setStep('verify');
-          setLoading(false);
-          return;
-        }
+        await register(payload);
+        onClose();
+        return;
       } else {
         const res = await login(formData.email, formData.password);
         if (res && res.requires_verification) {
@@ -638,7 +630,7 @@ export default function AuthModal({ isOpen, onClose }) {
                 disabled={loading}
                 className="w-full mono-btn-primary py-3 font-bold text-xs uppercase tracking-widest mt-2 rounded-lg"
               >
-                {loading ? 'PROCESSING...' : isRegister ? 'CREATE ACCOUNT & GET OTP' : 'SIGN IN TO PROFILE'}
+                {loading ? 'PROCESSING...' : isRegister ? 'CREATE ACCOUNT & SIGN IN' : 'SIGN IN TO PROFILE'}
               </button>
             </form>
 

@@ -18,10 +18,10 @@ function isSmtpLive() {
   return !!(process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_PASS !== 'your_app_password');
 }
 
-// 1. Register Buyer (Requires Email / Phone Verification)
+// 1. Register Buyer (Instant Creation & Direct Login - No Verification Required)
 router.post('/register', async (req, res) => {
   try {
-    const { full_name, email, password, phone, address, verification_method = 'email' } = req.body;
+    const { full_name, email, password, phone, address } = req.body;
 
     if (!full_name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
@@ -32,67 +32,25 @@ router.post('/register', async (req, res) => {
     const existingUser = await db.query('SELECT id, is_verified FROM users WHERE email = $1', [cleanEmail]);
     
     if (existingUser.rows.length > 0) {
-      const existing = existingUser.rows[0];
-      if (existing.is_verified === false) {
-        // Unverified existing account — resend verification code
-        const otpCode = generateOTP();
-        const verifyToken = crypto.randomBytes(24).toString('hex');
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-        await db.query(
-          `UPDATE users SET verification_code = $1, verification_token = $2, verification_expires = $3 WHERE id = $4`,
-          [otpCode, verifyToken, expiresAt, existing.id]
-        );
-
-        const verifyEmailPayload = buildVerificationEmail({ full_name, email: cleanEmail }, otpCode, verifyToken);
-        setImmediate(() => {
-          sendMail({ to: cleanEmail, ...verifyEmailPayload, metadata: { user_id: existing.id, verification_token: verifyToken } }).catch(() => {});
-          if (cleanPhone) {
-            sendSMS({ to: cleanPhone, message: buildPhoneVerificationMessage(otpCode), metadata: { user_id: existing.id } }).catch(() => {});
-          }
-        });
-
-        return res.status(200).json({
-          requires_verification: true,
-          email: cleanEmail,
-          phone: cleanPhone,
-          message: 'An unverified account with this email exists. A 6-digit verification code has been sent to your personal email.'
-        });
-      }
-      return res.status(400).json({ error: 'An account with this personal email already exists.' });
+      // Auto-verify existing account if it was previously unverified
+      await db.query('UPDATE users SET is_verified = true WHERE email = $1', [cleanEmail]);
+      const userRes = await db.query('SELECT id, full_name, email, role, phone, address, created_at FROM users WHERE email = $1', [cleanEmail]);
+      const user = userRes.rows[0];
+      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+      return res.status(200).json({ user, token, message: 'Welcome back! You are logged in.' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
-    const otpCode = generateOTP();
-    const verifyToken = crypto.randomBytes(24).toString('hex');
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     const newUser = await db.query(
-      `INSERT INTO users (full_name, email, password_hash, role, phone, address, is_verified, verification_code, verification_token, verification_expires)
-       VALUES ($1, $2, $3, 'buyer', $4, $5, false, $6, $7, $8)
+      `INSERT INTO users (full_name, email, password_hash, role, phone, address, is_verified)
+       VALUES ($1, $2, $3, 'buyer', $4, $5, true)
        RETURNING id, full_name, email, role, phone, address, is_verified, created_at`,
-      [full_name.trim(), cleanEmail, password_hash, cleanPhone, address || '', otpCode, verifyToken, expiresAt]
+      [full_name.trim(), cleanEmail, password_hash, cleanPhone, address || '']
     );
 
     const user = newUser.rows[0];
-
-    // Send async verification email & SMS to buyer
-    const verifyEmailPayload = buildVerificationEmail(user, otpCode, verifyToken);
-    setImmediate(() => {
-      sendMail({
-        to: cleanEmail,
-        ...verifyEmailPayload,
-        metadata: { user_id: user.id, verification_token: verifyToken }
-      }).catch(() => {});
-
-      if (cleanPhone) {
-        sendSMS({
-          to: cleanPhone,
-          message: buildPhoneVerificationMessage(otpCode),
-          metadata: { user_id: user.id }
-        }).catch(() => {});
-      }
-    });
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
     // Notify admin of new account registration
     const adminNoticePayload = buildRegistrationEmail(user);
@@ -102,11 +60,9 @@ router.post('/register', async (req, res) => {
     });
 
     res.status(201).json({
-      requires_verification: true,
-      email: cleanEmail,
-      phone: cleanPhone,
-      otp_code: otpCode,
-      message: `Account created! Verification 6-digit code: ${otpCode}. A confirmation email has also been dispatched.`
+      user,
+      token,
+      message: '🎉 Account created successfully! Welcome to RC Battleground.'
     });
   } catch (err) {
     console.error('Register error:', err);
