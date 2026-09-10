@@ -20,8 +20,9 @@ function getTransporter() {
 
   if (!transporter) {
     const isGmail = host.toLowerCase().includes('gmail');
-    const port = rawPort ? parseInt(rawPort, 10) : 587;
-    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+    // Force Port 587 (STARTTLS) for Gmail as Port 465 times out on cloud firewalls
+    const port = isGmail ? 587 : (rawPort ? parseInt(rawPort, 10) : 587);
+    const secure = isGmail ? false : (process.env.SMTP_SECURE === 'true' || port === 465);
 
     transporter = nodemailer.createTransport({
       host: isGmail ? 'smtp.gmail.com' : host,
@@ -29,9 +30,9 @@ function getTransporter() {
       secure,
       auth: { user, pass },
       family: 4, // CRITICAL: Force IPv4 resolution on Render containers to fix IPv6 socket timeout
-      connectionTimeout: 12000,
-      greetingTimeout: 12000,
-      socketTimeout: 15000,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
       tls: {
         rejectUnauthorized: false,
       },
