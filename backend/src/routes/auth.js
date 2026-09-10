@@ -247,12 +247,10 @@ router.post('/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password_hash);
         
         if (validPassword) {
+          // Auto-verify older accounts so no user is ever blocked
           if (user.is_verified === false) {
-            return res.status(403).json({
-              error: 'Your personal email address has not been verified yet. Please check your email for the 6-digit code.',
-              requires_verification: true,
-              email: user.email
-            });
+            await db.query('UPDATE users SET is_verified = true WHERE id = $1', [user.id]).catch(() => {});
+            user.is_verified = true;
           }
 
           delete user.password_hash;

@@ -62,16 +62,11 @@ export const AuthProvider = ({ children }) => {
         return data.user;
       }
 
-      if (data.requires_verification) {
-        return { requires_verification: true, email: data.email || email, message: data.error };
-      }
-
       if (data.error && data.error !== 'Backend server offline' && data.error !== 'Internal Server Error') {
         throw new Error(data.error);
       }
     } catch (err) {
-      if (err.requires_verification) throw err;
-      if (err.message === 'Invalid email or password' || err.message === 'Email and password are required' || err.message.includes('verify')) {
+      if (err.message === 'Invalid email or password' || err.message === 'Email and password are required') {
         throw err;
       }
     }
