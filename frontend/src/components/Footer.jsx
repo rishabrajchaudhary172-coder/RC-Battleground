@@ -116,14 +116,6 @@ export default function Footer() {
               <li><Link to="/contact" className="hover:text-white transition-colors">Pit Crew Support</Link></li>
             </ul>
           </div>
-
-          <div>
-            <h4 className="text-white font-bold uppercase tracking-widest mb-4 font-mono text-xs">Portals</h4>
-            <ul className="space-y-2.5 font-mono text-xs text-zinc-400">
-              <li><Link to="/profile" className="hover:text-white transition-colors">Buyer Profile</Link></li>
-              <li><Link to="/admin/login" className="text-zinc-300 font-bold hover:text-white transition-colors underline">Admin Login Portal</Link></li>
-            </ul>
-          </div>
         </div>
 
         {/* Bottom copyright */}

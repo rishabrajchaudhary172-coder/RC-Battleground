@@ -105,7 +105,8 @@ router.post('/register', async (req, res) => {
       requires_verification: true,
       email: cleanEmail,
       phone: cleanPhone,
-      message: 'Account created! Please check your personal email for the 6-digit verification code to complete registration.'
+      otp_code: otpCode,
+      message: `Account created! Verification 6-digit code: ${otpCode}. A confirmation email has also been dispatched.`
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -424,6 +425,116 @@ router.get('/me', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Fetch me error:', err);
     res.status(500).json({ error: 'Server error fetching user profile' });
+  }
+});
+
+// 6. Forgot Password (Request OTP via Email or Phone)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email_or_phone } = req.body;
+    if (!email_or_phone) {
+      return res.status(400).json({ error: 'Email address or Phone number is required' });
+    }
+
+    const cleanInput = email_or_phone.trim().toLowerCase();
+    const userRes = await db.query(
+      `SELECT * FROM users WHERE LOWER(email) = $1 OR phone = $1 OR phone = $2`,
+      [cleanInput, email_or_phone.trim()]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'No driver account found with this email or phone number.' });
+    }
+
+    const user = userRes.rows[0];
+    const otpCode = generateOTP();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await db.query(
+      `UPDATE users SET verification_code = $1, verification_expires = $2 WHERE id = $3`,
+      [otpCode, expiresAt, user.id]
+    );
+
+    // Send Reset OTP via Email and SMS
+    if (user.email) {
+      sendMail({
+        to: user.email,
+        subject: `Password Reset Code (${otpCode}) – RC Battleground`,
+        html: `
+          <div style="font-family:sans-serif;padding:20px;background:#09090b;color:#fff;">
+            <h2>Password Reset Verification</h2>
+            <p>Your 6-digit OTP code to reset your RC Battleground password is:</p>
+            <h1 style="color:#ef4444;font-size:32px;letter-spacing:4px;">${otpCode}</h1>
+            <p>This code expires in 15 minutes. If you did not request this, please ignore this message.</p>
+          </div>
+        `,
+        eventType: 'password_reset'
+      }).catch(e => console.error('Reset email error:', e.message));
+    }
+
+    if (user.phone) {
+      sendSMS({
+        to: user.phone,
+        message: `[RC Battleground] Your password reset OTP is ${otpCode}. Valid for 15 minutes.`,
+      }).catch(e => console.error('Reset SMS error:', e.message));
+    }
+
+    res.json({
+      success: true,
+      email: user.email,
+      phone: user.phone,
+      otp_code: otpCode,
+      message: `Password reset 6-digit OTP code (${otpCode}) dispatched to ${user.email || user.phone}.`
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Server error processing password recovery' });
+  }
+});
+
+// 7. Reset Password (Verify OTP & Set New Password)
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email_or_phone, otp_code, new_password } = req.body;
+    if (!email_or_phone || !otp_code || !new_password) {
+      return res.status(400).json({ error: 'Email/Phone, 6-digit OTP code, and new password are required' });
+    }
+
+    const cleanInput = email_or_phone.trim().toLowerCase();
+    const cleanCode = otp_code.toString().trim();
+
+    const userRes = await db.query(
+      `SELECT * FROM users WHERE LOWER(email) = $1 OR phone = $1 OR phone = $2`,
+      [cleanInput, email_or_phone.trim()]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    const user = userRes.rows[0];
+
+    if (!user.verification_code || user.verification_code !== cleanCode) {
+      return res.status(400).json({ error: 'Invalid 6-digit reset OTP code. Please check and try again.' });
+    }
+
+    if (user.verification_expires && new Date(user.verification_expires) < new Date()) {
+      return res.status(400).json({ error: 'Reset OTP code has expired. Please request a new code.' });
+    }
+
+    const password_hash = await bcrypt.hash(new_password, 10);
+    await db.query(
+      `UPDATE users SET password_hash = $1, verification_code = NULL, verification_expires = NULL WHERE id = $2`,
+      [password_hash, user.id]
+    );
+
+    res.json({
+      success: true,
+      message: '🎉 Password reset successfully! You can now sign in with your new password.'
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Server error resetting password' });
   }
 });
 
