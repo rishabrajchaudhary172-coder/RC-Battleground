@@ -12,8 +12,12 @@ export default function Footer() {
           
           {/* Left Brand & Socials Column */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 bg-white text-black font-black text-xl flex items-center justify-center rounded">RC</div>
+            <div className="flex items-center space-x-3" title="Logo RC-battle ground">
+              <img
+                src="/logo_rc_battleground.png"
+                alt="Logo RC-battle ground"
+                className="w-10 h-10 object-contain filter drop-shadow-md brightness-110"
+              />
               <span className="font-black tracking-widest text-lg text-white uppercase font-sans">RC BATTLEGROUND</span>
             </div>
             

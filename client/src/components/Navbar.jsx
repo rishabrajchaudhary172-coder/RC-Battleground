@@ -103,16 +103,18 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
               <span className="hidden sm:inline">MENU</span>
             </button>
 
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-white text-black font-black text-xl flex items-center justify-center tracking-tighter transition-transform group-hover:scale-105 font-mono brand-logo-box">
-                RC
-              </div>
+            <Link to="/" className="flex items-center space-x-3 group" title="Logo RC-battle ground">
+              <img
+                src="/logo_rc_battleground.png"
+                alt="Logo RC-battle ground"
+                className="w-11 h-11 object-contain transition-transform group-hover:scale-105 filter drop-shadow-md brightness-110"
+              />
               <div className="flex flex-col">
                 <span className="font-black tracking-widest text-lg text-white leading-tight uppercase font-sans">
-                  BATTLEGROUND
+                  RC BATTLEGROUND
                 </span>
                 <span className="text-[10px] font-mono text-zinc-400 tracking-widest uppercase">
-                  PRECISION RC VEHICLES
+                  GOTHATAR-7, KATHMANDU
                 </span>
               </div>
             </Link>

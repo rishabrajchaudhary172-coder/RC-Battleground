@@ -46,7 +46,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-white selection:text-black relative overflow-x-hidden">
+      {/* Permanent Fixed Transparent Background Logo Watermark on Every Page */}
+      <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden select-none">
+        <img
+          src="/logo_rc_battleground.png"
+          alt="Logo RC-battle ground"
+          className="w-[500px] h-[500px] sm:w-[650px] sm:h-[650px] md:w-[800px] md:h-[800px] lg:w-[950px] lg:h-[950px] opacity-[0.04] dark:opacity-[0.05] grayscale brightness-125 dark:brightness-200 pointer-events-none object-contain transition-all duration-300"
+        />
+      </div>
+
       {showIntro && <IntroSplash onComplete={handleIntroComplete} />}
 
       <Routes>
