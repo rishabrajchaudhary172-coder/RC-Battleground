@@ -58,7 +58,14 @@ export default function AuthModal({ isOpen, onClose }) {
       if (isRegister) {
         const fullPhone = getFullPhone();
         const payload = { ...formData, phone: fullPhone };
-        await register(payload);
+        const res = await register(payload);
+        if (res && res.requires_verification) {
+          setVerificationEmail(res.email || formData.email);
+          setVerificationMsg(res.message || 'Account created! Please check your email for the 6-digit verification code.');
+          setStep('verify');
+          setLoading(false);
+          return;
+        }
         onClose();
         return;
       } else {

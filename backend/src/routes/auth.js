@@ -18,7 +18,7 @@ function isSmtpLive() {
   return !!(process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_PASS !== 'your_app_password');
 }
 
-// 1. Register Buyer (Instant Creation & Direct Login - No Verification Required)
+// 1. Register Buyer (Enforces Real Email 6-Digit OTP Verification)
 router.post('/register', async (req, res) => {
   try {
     const { full_name, email, password, phone, address } = req.body;
@@ -32,25 +32,67 @@ router.post('/register', async (req, res) => {
     const existingUser = await db.query('SELECT id, is_verified FROM users WHERE email = $1', [cleanEmail]);
     
     if (existingUser.rows.length > 0) {
-      // Auto-verify existing account if it was previously unverified
-      await db.query('UPDATE users SET is_verified = true WHERE email = $1', [cleanEmail]);
-      const userRes = await db.query('SELECT id, full_name, email, role, phone, address, created_at FROM users WHERE email = $1', [cleanEmail]);
-      const user = userRes.rows[0];
-      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-      return res.status(200).json({ user, token, message: 'Welcome back! You are logged in.' });
+      const existing = existingUser.rows[0];
+      if (existing.is_verified === false) {
+        // Resend verification OTP code for unverified account
+        const otpCode = generateOTP();
+        const verifyToken = crypto.randomBytes(24).toString('hex');
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        await db.query(
+          `UPDATE users SET verification_code = $1, verification_token = $2, verification_expires = $3 WHERE id = $4`,
+          [otpCode, verifyToken, expiresAt, existing.id]
+        );
+
+        const verifyEmailPayload = buildVerificationEmail({ full_name, email: cleanEmail }, otpCode, verifyToken);
+        setImmediate(() => {
+          sendMail({ to: cleanEmail, ...verifyEmailPayload, metadata: { user_id: existing.id } }).catch((e) => console.error('Verification email error:', e.message));
+          if (cleanPhone) {
+            sendSMS({ to: cleanPhone, message: buildPhoneVerificationMessage(otpCode), metadata: { user_id: existing.id } }).catch(() => {});
+          }
+        });
+
+        return res.status(200).json({
+          requires_verification: true,
+          email: cleanEmail,
+          phone: cleanPhone,
+          message: 'An unverified account with this email exists. A 6-digit verification code has been dispatched to your email.'
+        });
+      }
+      return res.status(400).json({ error: 'An account with this email address already exists.' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
+    const otpCode = generateOTP();
+    const verifyToken = crypto.randomBytes(24).toString('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     const newUser = await db.query(
-      `INSERT INTO users (full_name, email, password_hash, role, phone, address, is_verified)
-       VALUES ($1, $2, $3, 'buyer', $4, $5, true)
+      `INSERT INTO users (full_name, email, password_hash, role, phone, address, is_verified, verification_code, verification_token, verification_expires)
+       VALUES ($1, $2, $3, 'buyer', $4, $5, false, $6, $7, $8)
        RETURNING id, full_name, email, role, phone, address, is_verified, created_at`,
-      [full_name.trim(), cleanEmail, password_hash, cleanPhone, address || '']
+      [full_name.trim(), cleanEmail, password_hash, cleanPhone, address || '', otpCode, verifyToken, expiresAt]
     );
 
     const user = newUser.rows[0];
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+
+    // Send async 6-digit OTP verification email to buyer from sanjamrockstar743@gmail.com
+    const verifyEmailPayload = buildVerificationEmail(user, otpCode, verifyToken);
+    setImmediate(() => {
+      sendMail({
+        to: cleanEmail,
+        ...verifyEmailPayload,
+        metadata: { user_id: user.id, verification_token: verifyToken }
+      }).catch((e) => console.error('Registration verification email error:', e.message));
+
+      if (cleanPhone) {
+        sendSMS({
+          to: cleanPhone,
+          message: buildPhoneVerificationMessage(otpCode),
+          metadata: { user_id: user.id }
+        }).catch(() => {});
+      }
+    });
 
     // Notify admin of new account registration
     const adminNoticePayload = buildRegistrationEmail(user);
@@ -60,9 +102,10 @@ router.post('/register', async (req, res) => {
     });
 
     res.status(201).json({
-      user,
-      token,
-      message: '🎉 Account created successfully! Welcome to RC Battleground.'
+      requires_verification: true,
+      email: cleanEmail,
+      phone: cleanPhone,
+      message: 'Account created! Please check your email for the 6-digit verification code to complete registration.'
     });
   } catch (err) {
     console.error('Register error:', err);
@@ -247,10 +290,31 @@ router.post('/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password_hash);
         
         if (validPassword) {
-          // Auto-verify older accounts so no user is ever blocked
+          // Enforce strict email verification for buyer accounts
           if (user.is_verified === false) {
-            await db.query('UPDATE users SET is_verified = true WHERE id = $1', [user.id]).catch(() => {});
-            user.is_verified = true;
+            const otpCode = generateOTP();
+            const verifyToken = crypto.randomBytes(24).toString('hex');
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+            await db.query(
+              `UPDATE users SET verification_code = $1, verification_token = $2, verification_expires = $3 WHERE id = $4`,
+              [otpCode, verifyToken, expiresAt, user.id]
+            );
+
+            const verifyEmailPayload = buildVerificationEmail(user, otpCode, verifyToken);
+            setImmediate(() => {
+              sendMail({
+                to: user.email,
+                ...verifyEmailPayload,
+                metadata: { user_id: user.id, verification_token: verifyToken }
+              }).catch((e) => console.error('Login verification email error:', e.message));
+            });
+
+            return res.status(403).json({
+              error: 'Your email address is not verified yet. A 6-digit verification code has been dispatched to your email.',
+              requires_verification: true,
+              email: user.email
+            });
           }
 
           delete user.password_hash;
