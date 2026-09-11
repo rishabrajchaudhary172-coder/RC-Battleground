@@ -102,14 +102,31 @@ async function sendMail({ to, subject, html, text, eventType = 'general', metada
   }
 
   const transport = getTransporter();
-  const from = process.env.SMTP_FROM || `"RC Battleground" <${process.env.SMTP_USER || 'admin@rcbattleground.com'}>`;
+  const smtpUser = process.env.SMTP_USER || 'sanjamrockstar743@gmail.com';
+  const from = process.env.SMTP_FROM || `"RC Battleground" <${smtpUser}>`;
+
+  // Generate clean plain text without excessive linebreaks or html junk
+  const cleanText = text || html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                              .replace(/<[^>]+>/g, ' ')
+                              .replace(/\s+/g, ' ')
+                              .trim();
 
   const mailOptions = {
     from,
     to: recipient,
+    replyTo: `"RC Battleground" <${smtpUser}>`,
     subject,
     html,
-    text: text || html.replace(/<[^>]*>?/gm, ''),
+    text: cleanText,
+    headers: {
+      'X-Priority': '1 (Highest)',
+      'X-MSMail-Priority': 'High',
+      'Importance': 'High',
+      'X-Mailer': 'RC Battleground System',
+      'Auto-Submitted': 'auto-generated',
+      'X-Auto-Response-Suppress': 'All',
+      'Precedence': 'bulk',
+    },
   };
 
   if (!transport) {
@@ -197,7 +214,8 @@ function getHtmlWrapper(headerTitle, bodyHtml) {
           ${bodyHtml}
         </div>
         <div class="footer">
-          RC Battleground System Notification • ${new Date().toUTCString()}
+          RC Battleground Official Transactional System • Support: sanjamrockstar743@gmail.com | Phone: +977 976-8532969<br>
+          Precision Remote Control Vehicles Arena, Kathmandu, Nepal • ${new Date().toUTCString()}
         </div>
       </div>
     </body>
