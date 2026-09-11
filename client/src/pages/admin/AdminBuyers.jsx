@@ -53,6 +53,21 @@ export default function AdminBuyers() {
     }
   };
 
+  const handleToggleVerify = async (id) => {
+    try {
+      const res = await fetch(`/api/admin/buyers/${id}/toggle-verify`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchBuyers();
+        if (selectedBuyerId === id) handleInspectBuyer(id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredBuyers = buyers.filter(
     (b) =>
       (b.full_name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
@@ -125,12 +140,23 @@ export default function AdminBuyers() {
                   </td>
                   <td className="p-3.5">
                     <div className="text-zinc-300">{b.email}</div>
-                    <div className="text-[10px] mt-0.5">
+                    <div className="text-[10px] mt-1 flex items-center gap-2">
                       {b.is_verified ? (
-                        <span className="text-emerald-400">✓ VERIFIED EMAIL</span>
+                        <span className="text-emerald-400 font-bold">✓ VERIFIED EMAIL</span>
                       ) : (
-                        <span className="text-amber-400">⚡ PENDING VERIFICATION</span>
+                        <span className="text-amber-400 font-bold">⚡ PENDING VERIFICATION</span>
                       )}
+                      <button
+                        onClick={() => handleToggleVerify(b.id)}
+                        className={`text-[9px] px-1.5 py-0.5 border font-bold uppercase rounded transition-colors ${
+                          b.is_verified
+                            ? 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-700'
+                            : 'border-emerald-600/60 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60'
+                        }`}
+                        title={b.is_verified ? 'Mark unverified' : 'Approve & verify driver account'}
+                      >
+                        {b.is_verified ? 'Unverify' : 'Verify Driver'}
+                      </button>
                     </div>
                   </td>
                   <td className="p-3.5">

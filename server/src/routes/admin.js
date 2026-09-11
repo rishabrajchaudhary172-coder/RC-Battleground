@@ -152,6 +152,46 @@ router.get('/buyers/:id', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// PUT Toggle Buyer Email Verification Status (Admin Only)
+router.put('/buyers/:id/toggle-verify', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const targetUserId = parseInt(id, 10);
+
+    let updatedUser = null;
+    if (db.memoryDb && Array.isArray(db.memoryDb.users)) {
+      const user = db.memoryDb.users.find(u => u.id === targetUserId);
+      if (user) {
+        user.is_verified = !user.is_verified;
+        user.verification_code = null;
+        user.verification_token = null;
+        user.verification_expires = null;
+        updatedUser = user;
+        if (db.saveMemoryDbToDisk) db.saveMemoryDbToDisk();
+      }
+    }
+
+    if (!updatedUser) {
+      const updateRes = await db.query(
+        `UPDATE users SET is_verified = NOT COALESCE(is_verified, false) WHERE id = $1 RETURNING id, full_name, email, is_verified`,
+        [targetUserId]
+      );
+      if (updateRes.rows.length === 0) {
+        return res.status(404).json({ error: 'User account not found' });
+      }
+      updatedUser = updateRes.rows[0];
+    }
+
+    res.json({
+      message: `✅ User '${updatedUser.full_name}' verification status updated to ${updatedUser.is_verified ? 'VERIFIED' : 'PENDING'}`,
+      is_verified: updatedUser.is_verified
+    });
+  } catch (err) {
+    console.error('Toggle verify error:', err);
+    res.status(500).json({ error: 'Server error updating verification status' });
+  }
+});
+
 // POST Verify & Test Email SMTP Configuration (Admin Only)
 router.post('/test-email', authenticateToken, requireAdmin, async (req, res) => {
   try {
