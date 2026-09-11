@@ -35,6 +35,20 @@
       "verification_token": "4f94b1e2ba0e074a3c267dc93d5b116937e16b20f04a8851",
       "verification_expires": "2026-09-11T09:03:50.773Z",
       "created_at": "2026-09-11T08:48:50.780Z"
+    },
+    {
+      "id": 4,
+      "full_name": "anish dangi",
+      "email": "dangianish2@gmail.com",
+      "password_hash": "$2a$10$M7ZsKP0yOpxjS5guH9hiVOyvzNBIBqafY/jicHt2U7hrkUi32lXQu",
+      "role": "buyer",
+      "phone": "+977 9865367887",
+      "address": "Dang",
+      "is_verified": false,
+      "verification_code": "364074",
+      "verification_token": "bc271f5636e2f699104498e2d2843f2a2aab5c463cb5b2cf",
+      "verification_expires": "2026-09-11T09:07:13.216Z",
+      "created_at": "2026-09-11T08:52:13.224Z"
     }
   ],
   "categories": [
@@ -354,5 +368,47 @@
       }
     }
   ],
-  "email_logs": []
+  "email_logs": [
+    {
+      "id": 3,
+      "recipient": "persistent_driver_1789116530528@gmail.com",
+      "subject": "🔐 Verify Your Personal Email Account – RC Battleground (163753)",
+      "event_type": "email_verification",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 12,
+        "verification_token": "4f94b1e2ba0e074a3c267dc93d5b116937e16b20f04a8851",
+        "messageId": "<4926027f-f839-af88-a2f8-8af9eda01610@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T08:48:55.381Z"
+    },
+    {
+      "id": 2,
+      "recipient": "sanjamrockstar743@gmail.com",
+      "subject": "🏎️ New Buyer Registration – RC Battleground",
+      "event_type": "buyer_registration",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 12,
+        "messageId": "<9419d545-fe0a-12c3-4182-0e680154657b@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T08:48:54.937Z"
+    },
+    {
+      "id": 1,
+      "recipient": "+977 9768532969",
+      "subject": "📱 SMS Notice: 🏎️ RC Battleground: Your driver verific...",
+      "event_type": "sms_verification",
+      "status": "simulated",
+      "error_message": "Live SMS API credentials not set in .env",
+      "metadata": {
+        "user_id": 12
+      },
+      "created_at": "2026-09-11T08:48:50.853Z"
+    }
+  ]
 }
