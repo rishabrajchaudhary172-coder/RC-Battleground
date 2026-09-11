@@ -26,8 +26,16 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function requireMasterAdmin(req, res, next) {
+  if (!req.user || req.user.role !== 'admin' || (!req.user.is_master_admin && req.user.id !== 1)) {
+    return res.status(403).json({ error: 'Master Admin (Second Lieutenant) privilege required' });
+  }
+  next();
+}
+
 module.exports = {
   JWT_SECRET,
   authenticateToken,
   requireAdmin,
+  requireMasterAdmin,
 };

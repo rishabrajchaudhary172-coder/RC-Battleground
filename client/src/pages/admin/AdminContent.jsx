@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { FileText, Save, Home as HomeIcon, Info, PhoneCall, Cpu, Plus, Trash2, ArrowUp, ArrowDown, Upload, Layers } from 'lucide-react';
+import { FileText, Save, Home as HomeIcon, Info, PhoneCall, Cpu, Plus, Trash2, ArrowUp, ArrowDown, Upload, Layers, MessageSquare, Mail, User, Clock, CheckCircle2 } from 'lucide-react';
 import CategoryTechnologiesTable from '../../components/CategoryTechnologiesTable';
 
 const DEFAULT_SLIDES = [
@@ -13,8 +13,9 @@ const DEFAULT_SLIDES = [
 
 export default function AdminContent() {
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState('home_slider');
+  const [activeTab, setActiveTab] = useState('pit_crew_inquiries');
   const [contentMap, setContentMap] = useState({});
+  const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -24,6 +25,18 @@ export default function AdminContent() {
   const [content, setContent] = useState('');
   const [metadata, setMetadata] = useState({});
   const [slides, setSlides] = useState(DEFAULT_SLIDES);
+
+  const fetchInquiries = async () => {
+    try {
+      const res = await fetch('/api/content/support-inquiries/all', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.inquiries) setInquiries(data.inquiries);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchContent = async () => {
     setLoading(true);
@@ -61,12 +74,47 @@ export default function AdminContent() {
 
   useEffect(() => {
     fetchContent();
+    fetchInquiries();
   }, []);
 
   const handleTabChange = (key) => {
     setActiveTab(key);
     setMsg('');
-    loadTabContent(key);
+    if (key === 'pit_crew_inquiries') {
+      fetchInquiries();
+    } else {
+      loadTabContent(key);
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      const nextStatus = currentStatus === 'read' ? 'unread' : 'read';
+      const res = await fetch(`/api/content/support-inquiries/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: nextStatus })
+      });
+      if (res.ok) fetchInquiries();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteInquiry = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this pit crew message?')) return;
+    try {
+      const res = await fetch(`/api/content/support-inquiries/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) fetchInquiries();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleSlideChange = (index, field, value) => {
@@ -178,6 +226,14 @@ export default function AdminContent() {
 
       {/* Tabs */}
       <div className="flex border-b border-zinc-800 font-mono text-xs uppercase font-bold overflow-x-auto">
+        <button
+          onClick={() => handleTabChange('pit_crew_inquiries')}
+          className={`flex items-center space-x-2 py-3 px-6 transition-colors border-b-2 whitespace-nowrap ${activeTab === 'pit_crew_inquiries' ? 'border-red-500 text-white bg-zinc-950 font-bold' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+        >
+          <MessageSquare className="w-4 h-4 text-red-500" />
+          <span>Dispatch Pit Crew Inquiries ({inquiries.length})</span>
+        </button>
+
         <button
           onClick={() => handleTabChange('home_slider')}
           className={`flex items-center space-x-2 py-3 px-6 transition-colors border-b-2 whitespace-nowrap ${activeTab === 'home_slider' ? 'border-white text-white bg-zinc-950 font-bold' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
@@ -475,6 +531,93 @@ export default function AdminContent() {
             </button>
           </div>
         </form>
+      )}
+
+      {activeTab === 'pit_crew_inquiries' && (
+        <div className="space-y-6 font-mono">
+          <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 p-6 rounded-2xl">
+            <div>
+              <h2 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-red-500" />
+                <span>DISPATCH PIT CREW SUPPORT INQUIRIES ({inquiries.length})</span>
+              </h2>
+              <p className="text-zinc-400 text-xs mt-1 font-sans">
+                Transmitted customer support inquiries, track booking requests, and technical tuning messages from drivers.
+              </p>
+            </div>
+            <button
+              onClick={fetchInquiries}
+              className="mono-btn-secondary py-2 px-4 text-xs font-bold"
+            >
+              Refresh Inquiries
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {inquiries.map((inq) => (
+              <div
+                key={inq.id}
+                className={`bg-zinc-950 border p-6 rounded-2xl space-y-3 transition-all ${
+                  inq.status === 'unread' ? 'border-red-600/60 shadow-lg shadow-red-950/20' : 'border-zinc-800/80 opacity-80'
+                }`}
+              >
+                <div className="flex items-start justify-between border-b border-zinc-900 pb-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                        inq.status === 'unread' ? 'bg-red-600 text-white font-black' : 'bg-zinc-800 text-zinc-400'
+                      }`}>
+                        {inq.status.toUpperCase()}
+                      </span>
+                      <h3 className="font-bold text-sm text-white">{inq.subject}</h3>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-zinc-400">
+                      <span className="flex items-center gap-1"><User className="w-3.5 h-3.5 text-zinc-500" /> {inq.name}</span>
+                      <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5 text-zinc-500" /> {inq.email}</span>
+                      <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-zinc-500" /> {new Date(inq.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleToggleStatus(inq.id, inq.status)}
+                      className={`text-xs px-3 py-1.5 border rounded font-mono font-bold transition-colors ${
+                        inq.status === 'unread'
+                          ? 'border-emerald-600/50 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/50'
+                          : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      {inq.status === 'unread' ? 'Mark Read' : 'Mark Unread'}
+                    </button>
+                    <a
+                      href={`mailto:${inq.email}?subject=RE: ${encodeURIComponent(inq.subject)}`}
+                      className="text-xs px-3 py-1.5 bg-white text-black font-bold rounded hover:bg-zinc-200 transition-colors inline-block"
+                    >
+                      Reply Email
+                    </a>
+                    <button
+                      onClick={() => handleDeleteInquiry(inq.id)}
+                      className="p-1.5 text-red-400 hover:text-red-300 transition-colors"
+                      title="Delete Inquiry"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-zinc-900/60 p-4 border border-zinc-800/80 rounded-xl text-xs text-zinc-300 font-sans leading-relaxed">
+                  "{inq.message}"
+                </div>
+              </div>
+            ))}
+
+            {inquiries.length === 0 && (
+              <div className="p-12 text-center bg-zinc-950 border border-zinc-800 rounded-2xl text-zinc-500 text-xs">
+                No pit crew support inquiries transmitted yet.
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {activeTab === 'category_technologies' && (

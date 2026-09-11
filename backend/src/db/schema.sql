@@ -25,6 +25,7 @@ CREATE TABLE users (
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'buyer' CHECK (role IN ('buyer', 'admin')),
+    is_master_admin BOOLEAN DEFAULT false,
     phone VARCHAR(30),
     address TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

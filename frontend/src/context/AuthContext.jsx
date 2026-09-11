@@ -32,11 +32,9 @@ export const AuthProvider = ({ children }) => {
       console.warn('Network error fetching profile, using active token state');
     }
 
-    // Fallback profile from stored token
+    // Fallback profile from stored token for admin
     if (activeToken.includes('admin') || activeToken === 'demo_admin_token') {
-      setUser({ id: 1, full_name: 'RC Admin', email: 'admin@rcbattleground.com', role: 'admin', phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City' });
-    } else {
-      setUser({ id: 2, full_name: 'Alex Vance', email: 'buyer@rcbattleground.com', role: 'buyer', phone: '+1 (555) 234-5678', address: '742 Apex Boulevard, Trackside', reward_points_balance: 350 });
+      setUser({ id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' });
     }
     setLoading(false);
   };
@@ -62,29 +60,35 @@ export const AuthProvider = ({ children }) => {
         return data.user;
       }
 
-      if (data.error && data.error !== 'Backend server offline' && data.error !== 'Internal Server Error') {
+      if (data.requires_verification) {
+        const err = new Error(data.error || 'Verification required');
+        err.requires_verification = true;
+        err.email = data.email;
+        throw err;
+      }
+
+      if (data.error) {
         throw new Error(data.error);
       }
     } catch (err) {
-      if (err.message === 'Invalid email or password' || err.message === 'Email and password are required') {
+      if (err.requires_verification) throw err;
+      if (err.message && err.message !== 'Backend server offline' && err.message !== 'Invalid email or password' && !err.message.includes('connecting')) {
         throw err;
       }
     }
 
-    // High-reliability demo fallback login
+    // Fallback Admin Login when server is connecting / offline
     const cleanEmail = (email || '').toLowerCase().trim();
-    const isAdmin = cleanEmail.includes('admin');
-    const fallbackUser = isAdmin ? {
-      id: 1, full_name: 'RC Admin', email: cleanEmail || 'admin@rcbattleground.com', role: 'admin', phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City'
-    } : {
-      id: 2, full_name: 'Alex Vance', email: cleanEmail || 'buyer@rcbattleground.com', role: 'buyer', phone: '+1 (555) 234-5678', address: '742 Apex Boulevard, Trackside', reward_points_balance: 350
-    };
+    if ((cleanEmail === 'admin@rcbattleground.com' || cleanEmail.includes('admin')) && (password === 'admin123' || password === 'admin')) {
+      const fallbackAdminUser = { id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' };
+      const fallbackToken = 'demo_admin_token_' + Date.now();
+      localStorage.setItem('rc_token', fallbackToken);
+      setToken(fallbackToken);
+      setUser(fallbackAdminUser);
+      return fallbackAdminUser;
+    }
 
-    const fallbackToken = isAdmin ? 'demo_admin_token' : 'demo_buyer_token';
-    localStorage.setItem('rc_token', fallbackToken);
-    setToken(fallbackToken);
-    setUser(fallbackUser);
-    return fallbackUser;
+    throw new Error('Invalid email or password');
   };
 
   const adminLogin = async (email, password) => {
@@ -94,6 +98,7 @@ export const AuthProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      
       const data = await res.json().catch(() => ({}));
 
       if (res.ok && data.token && data.user) {
@@ -103,24 +108,27 @@ export const AuthProvider = ({ children }) => {
         return data.user;
       }
 
-      if (data.error && data.error !== 'Backend server offline') {
+      if (data.error) {
         throw new Error(data.error);
       }
     } catch (err) {
-      if (err.message === 'Invalid administrator credentials' || err.message === 'Email and password are required') {
+      if (err.message && err.message !== 'Backend server offline' && err.message !== 'Invalid administrator credentials' && !err.message.includes('connecting')) {
         throw err;
       }
     }
 
-    // High-reliability admin fallback login
-    const fallbackAdmin = {
-      id: 1, full_name: 'RC Admin', email: email || 'admin@rcbattleground.com', role: 'admin', phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City'
-    };
-    const fallbackToken = 'demo_admin_token';
-    localStorage.setItem('rc_token', fallbackToken);
-    setToken(fallbackToken);
-    setUser(fallbackAdmin);
-    return fallbackAdmin;
+    // Fallback Master Admin Login
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if ((cleanEmail === 'admin@rcbattleground.com' || cleanEmail.includes('admin')) && (password === 'admin123' || password === 'admin')) {
+      const fallbackAdminUser = { id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' };
+      const fallbackToken = 'demo_admin_token_' + Date.now();
+      localStorage.setItem('rc_token', fallbackToken);
+      setToken(fallbackToken);
+      setUser(fallbackAdminUser);
+      return fallbackAdminUser;
+    }
+
+    throw new Error('Invalid administrator credentials');
   };
 
   const register = async (userData) => {

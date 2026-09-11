@@ -24,22 +24,13 @@ async function initDatabase() {
 
     // 1. Password Hashes
     const adminPasswordHash = await bcrypt.hash('admin123', 10);
-    const buyerPasswordHash = await bcrypt.hash('buyer123', 10);
 
-    // 2. Users
+    // 2. Master Admin Account ("Second Lieutenant")
     await client.query(
-      `INSERT INTO users (full_name, email, password_hash, role, phone, address)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      ['RC Admin', 'admin@rcbattleground.com', adminPasswordHash, 'admin', '+1 (800) 555-0199', '100 Arena Way, Speed City']
+      `INSERT INTO users (full_name, email, password_hash, role, is_master_admin, phone, address)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      ['Second Lieutenant', 'admin@rcbattleground.com', adminPasswordHash, 'admin', true, '+977 9768532969', 'Kaudhol, Chunikhel, Nepal']
     );
-
-    const buyerUserRes = await client.query(
-      `INSERT INTO users (full_name, email, password_hash, role, phone, address)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      ['Alex Vance', 'buyer@rcbattleground.com', buyerPasswordHash, 'buyer', '+1 (555) 234-5678', '742 Apex Boulevard, Trackside']
-    );
-
-    const buyerId = buyerUserRes.rows[0].id;
 
     // 3. Categories (RC Battleground default + custom)
     const categoriesData = [
@@ -186,84 +177,12 @@ async function initDatabase() {
       );
     }
 
-    // Assign buyer active membership
-    const proPlanRes = await client.query(`SELECT id FROM membership_plans WHERE plan_name = 'Pro'`);
-    if (proPlanRes.rows.length > 0) {
-      const proPlanId = proPlanRes.rows[0].id;
-      const startDate = new Date();
-      const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-      await client.query(
-        `INSERT INTO user_memberships (user_id, plan_id, plan_name, price, start_date, end_date, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [buyerId, proPlanId, 'Pro', 19.99, startDate, endDate, 'active']
-      );
-    }
-
     // 6. Reward Settings
     await client.query(
       `INSERT INTO reward_settings (points_per_dollar_spent, dollars_per_point_redeemed)
        VALUES ($1, $2)`,
       [1.00, 0.05]
     );
-
-    await client.query(
-      `INSERT INTO reward_points_transactions (user_id, type, points, description)
-       VALUES 
-       ($1, 'earned', 350, 'Welcome Bonus & Pro Circuit VIP Signup'),
-       ($1, 'earned', 280, 'Purchased Tokyo Spec Nissan GT-R Drift Racer')`,
-      [buyerId]
-    );
-
-    // 7. Initial Reviews & Ratings
-    const gtrId = productMap['tokyo-spec-nissan-gtr-drift-racer'];
-    const apexId = productMap['apex-predator-4wd-off-road-buggy'];
-    const titanId = productMap['titan-crusher-6s-monster-bashing-truck'];
-
-    if (gtrId) {
-      await client.query(
-        `INSERT INTO reviews_ratings (product_id, user_id, rating, comment, is_featured)
-         VALUES ($1, $2, 5, 'Insane drift angles right out of the box! Gyro assistance makes line transitions effortless.', true)`,
-        [gtrId, buyerId]
-      );
-    }
-    if (apexId) {
-      await client.query(
-        `INSERT INTO reviews_ratings (product_id, user_id, rating, comment, is_featured)
-         VALUES ($1, $2, 5, 'Absolute beast on dirt tracks. Handles 4S LiPo jumps like a champ without breaking a arm.', true)`,
-        [apexId, buyerId]
-      );
-    }
-    if (titanId) {
-      await client.query(
-        `INSERT INTO reviews_ratings (product_id, user_id, rating, comment, is_featured)
-         VALUES ($1, $2, 5, 'The 6S power is unreal. Double backflips off ramps are effortless. High quality steel drivetrain.', true)`,
-        [titanId, buyerId]
-      );
-    }
-
-    // 8. Wishlist item
-    if (apexId) {
-      await client.query(
-        `INSERT INTO wishlist (user_id, product_id) VALUES ($1, $2)`,
-        [buyerId, apexId]
-      );
-    }
-
-    // 9. Initial Order
-    if (gtrId) {
-      const orderRes = await client.query(
-        `INSERT INTO orders (user_id, order_number, total_amount, discount_amount, points_redeemed, points_earned, status, shipping_address, payment_method)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-        [buyerId, 'RC-2026-98102', 279.50, 0.00, 0, 280, 'delivered', '742 Apex Boulevard, Trackside', 'Credit Card (Visa ending 4242)']
-      );
-      const orderId = orderRes.rows[0].id;
-
-      await client.query(
-        `INSERT INTO order_items (order_id, product_id, quantity, unit_price)
-         VALUES ($1, $2, 1, 279.50)`,
-        [orderId, gtrId]
-      );
-    }
 
     // 10. Seed Upcoming Events
     const eventsData = [

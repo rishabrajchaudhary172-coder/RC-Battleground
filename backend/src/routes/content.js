@@ -92,4 +92,94 @@ router.put('/:key', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// DISPATCH PIT CREW MESSAGES & SUPPORT INQUIRIES ENDPOINTS
+// -------------------------------------------------------------------
+
+// POST Submit Support Inquiry (Dispatch Pit Crew Message)
+router.post('/support-inquiries', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Driver Name, Email, and Message are required' });
+    }
+
+    const inquiry = {
+      id: Date.now(),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      subject: (subject || 'General Pit Crew Inquiry').trim(),
+      message: message.trim(),
+      status: 'unread',
+      created_at: new Date()
+    };
+
+    if (!db.memoryDb) db.memoryDb = {};
+    if (!Array.isArray(db.memoryDb.support_inquiries)) db.memoryDb.support_inquiries = [];
+    db.memoryDb.support_inquiries.unshift(inquiry);
+
+    if (db.saveMemoryDbToDisk) {
+      db.saveMemoryDbToDisk();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: '✅ Support inquiry transmitted successfully to the Pit Crew!',
+      inquiry
+    });
+  } catch (err) {
+    console.error('Submit support inquiry error:', err);
+    res.status(500).json({ error: 'Server error transmitting support inquiry' });
+  }
+});
+
+// GET All Support Inquiries (Admin Only)
+router.get('/support-inquiries/all', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    let inquiries = [];
+    if (db.memoryDb && Array.isArray(db.memoryDb.support_inquiries)) {
+      inquiries = db.memoryDb.support_inquiries;
+    }
+    res.json({ inquiries });
+  } catch (err) {
+    console.error('Fetch support inquiries error:', err);
+    res.status(500).json({ error: 'Server error fetching pit crew support inquiries' });
+  }
+});
+
+// PUT Mark Inquiry Read / Replied (Admin Only)
+router.put('/support-inquiries/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (db.memoryDb && Array.isArray(db.memoryDb.support_inquiries)) {
+      const item = db.memoryDb.support_inquiries.find(inq => String(inq.id) === String(id));
+      if (item) {
+        item.status = status || 'read';
+        if (db.saveMemoryDbToDisk) db.saveMemoryDbToDisk();
+        return res.json({ success: true, inquiry: item });
+      }
+    }
+    res.status(404).json({ error: 'Support inquiry not found' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error updating support inquiry status' });
+  }
+});
+
+// DELETE Support Inquiry (Admin Only)
+router.delete('/support-inquiries/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (db.memoryDb && Array.isArray(db.memoryDb.support_inquiries)) {
+      db.memoryDb.support_inquiries = db.memoryDb.support_inquiries.filter(inq => String(inq.id) !== String(id));
+      if (db.saveMemoryDbToDisk) db.saveMemoryDbToDisk();
+      return res.json({ success: true, message: 'Support inquiry deleted successfully' });
+    }
+    res.status(404).json({ error: 'Support inquiry not found' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error deleting support inquiry' });
+  }
+});
+
 module.exports = router;

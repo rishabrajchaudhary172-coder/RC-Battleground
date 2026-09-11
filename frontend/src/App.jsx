@@ -32,6 +32,7 @@ import AdminContent from './pages/admin/AdminContent';
 import AdminEvents from './pages/admin/AdminEvents';
 import AdminReviews from './pages/admin/AdminReviews';
 import AdminPayments from './pages/admin/AdminPayments';
+import AdminManageAdmins from './pages/admin/AdminManageAdmins';
 
 import logoImg from './assets/logo_rc_battleground.png';
 
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="buyers" element={<AdminBuyers />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="payments" element={<AdminPayments />} />
+          <Route path="admins" element={<AdminManageAdmins />} />
           <Route path="settings" element={<AdminMembershipsRewards />} />
           <Route path="content" element={<AdminContent />} />
         </Route>

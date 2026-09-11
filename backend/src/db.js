@@ -19,12 +19,11 @@ let pgConnected = null;
 
 // Pre-seeded In-Memory Store for Zero-Downtime Reliability
 const adminHash = bcrypt.hashSync('admin123', 10);
-const buyerHash = bcrypt.hashSync('buyer123', 10);
 
 const memoryDb = {
+  max_admin_limit: 5,
   users: [
-    { id: 1, full_name: 'RC Admin', email: 'admin@rcbattleground.com', password_hash: adminHash, role: 'admin', is_verified: true, phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City', created_at: new Date() },
-    { id: 2, full_name: 'Alex Vance', email: 'buyer@rcbattleground.com', password_hash: buyerHash, role: 'buyer', is_verified: true, phone: '+1 (555) 234-5678', address: '742 Apex Boulevard, Trackside', created_at: new Date() }
+    { id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', password_hash: adminHash, role: 'admin', is_master_admin: true, is_verified: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal', created_at: new Date() }
   ],
   categories: [
     { id: 1, name: 'Off-Road Buggies', slug: 'off-road-buggies', description: 'High-speed all-terrain electric buggies built for dirt, jumps, and gravel.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
@@ -41,7 +40,7 @@ const memoryDb = {
       description: 'The Apex Predator is a 1/10 scale brushless ready-to-run buggy capable of speeds up to 65+ MPH.',
       price: 349.99, stock: 14, seller_name: 'RC Battleground Official', is_featured: true,
       images: ['https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=1000&q=80'],
-      specs: { scale: '1/10', max_speed: '65+ MPH', motor: '3660 3300KV Brushless' }, avg_rating: '5.0', review_count: 1, created_at: new Date()
+      specs: { scale: '1/10', max_speed: '65+ MPH', motor: '3660 3300KV Brushless' }, avg_rating: '0.0', review_count: 0, created_at: new Date()
     },
     {
       id: 2, category_id: 2, category_name: 'Drift Cars', category_slug: 'drift-cars',
@@ -49,7 +48,7 @@ const memoryDb = {
       description: 'Engineered for smooth indoor polished concrete and asphalt drifting.',
       price: 279.50, stock: 9, seller_name: 'DriftCraft Garage', is_featured: true,
       images: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80'],
-      specs: { scale: '1/10', drivetrain: 'RWD Counter-Steer' }, avg_rating: '5.0', review_count: 1, created_at: new Date()
+      specs: { scale: '1/10', drivetrain: 'RWD Counter-Steer' }, avg_rating: '0.0', review_count: 0, created_at: new Date()
     },
     {
       id: 3, category_id: 3, category_name: 'Monster Trucks', category_slug: 'monster-trucks',
@@ -57,7 +56,7 @@ const memoryDb = {
       description: 'Unstoppable 1/8 scale stunt truck built to absorb massive double-flips and high jumps.',
       price: 529.00, stock: 6, seller_name: 'RC Battleground Official', is_featured: true,
       images: ['https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1000&q=80'],
-      specs: { scale: '1/8', max_speed: '70+ MPH on 6S' }, avg_rating: '5.0', review_count: 1, created_at: new Date()
+      specs: { scale: '1/8', max_speed: '70+ MPH on 6S' }, avg_rating: '0.0', review_count: 0, created_at: new Date()
     },
     {
       id: 4, category_id: 4, category_name: 'Rock Crawlers', category_slug: 'rock-crawlers',
@@ -89,32 +88,31 @@ const memoryDb = {
     { id: 2, plan_name: 'Pro Circuit VIP', description: 'Elevated membership tier with 1.5x reward points and express shipping.', price: 19.99, duration_days: 30, perks: ['1.5x Reward Points Earning', 'Free Express Shipping', '5% Off Parts'] },
     { id: 3, plan_name: 'Apex Master Pass', description: 'Ultimate annual VIP pass with 2x reward points and 10% discount.', price: 149.99, duration_days: 365, perks: ['2x Reward Points Earning', 'Free Next-Day Express Shipping', '10% Storewide Discount'] }
   ],
-  user_memberships: [
-    { id: 1, user_id: 2, plan_id: 2, plan_name: 'Pro Circuit VIP', price: 19.99, start_date: new Date(), end_date: new Date(Date.now() + 30 * 86400000), status: 'active' }
-  ],
+  user_memberships: [],
   reward_settings: { points_per_dollar_spent: 1.00, dollars_per_point_redeemed: 0.05 },
-  reward_points_transactions: [
-    { id: 1, user_id: 2, type: 'earned', points: 350, description: 'Welcome Bonus & Pro Circuit VIP Signup', created_at: new Date() }
-  ],
-  reviews_ratings: [
-    { id: 1, product_id: 2, user_id: 2, rating: 5, comment: 'Insane drift angles right out of the box!', is_featured: true, created_at: new Date() }
-  ],
-  wishlist: [
-    { id: 1, user_id: 2, product_id: 1, created_at: new Date() }
-  ],
-  orders: [
-    { id: 1, user_id: 2, order_number: 'RC-2026-98102', total_amount: 279.50, discount_amount: 0.00, points_redeemed: 0, points_earned: 280, status: 'delivered', shipping_address: '742 Apex Boulevard, Trackside', payment_method: 'Credit Card (Visa ending 4242)', created_at: new Date() }
-  ],
-  order_items: [
-    { id: 1, order_id: 1, product_id: 1, quantity: 1, unit_price: 279.50 }
-  ],
+  reward_points_transactions: [],
+  reviews_ratings: [],
+  wishlist: [],
+  orders: [],
+  order_items: [],
   events: [
     { id: 1, title: 'RC Battleground 4WD Dirt Grand Prix 2026', slug: 'rc-battleground-4wd-dirt-grand-prix-2026', event_date: new Date(Date.now() + 14 * 86400000), location: 'Sector 7 Dirt Arena', track_type: 'Off-Road Clay & Dirt', description: 'Premier 1/10 scale 4WD buggy championship.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=1000&q=80', entry_fee: 25.00, max_participants: 32, registered_count: 14 }
   ],
   site_content: [
     { id: 1, key: 'home_banner', title: 'UNLEASH HIGH-SPEED DOMINANCE', content: 'The premier monochrome marketplace for professional RC cars, high-output bashing trucks, drift machines, and racing drones.', metadata: { button_text: 'EXPLORE CATALOG', tagline: 'PRECISION ENGINEERING • MAXIMUM SPEED' } }
   ],
-  email_logs: []
+  email_logs: [],
+  support_inquiries: [
+    {
+      id: 1,
+      name: 'Alex Vance',
+      email: 'driver@rcbattleground.com',
+      subject: 'Track Booking & Technical Tuning',
+      message: 'Requesting arena booking for Sector 7 Dirt Arena on Sunday for 1/10 scale 4WD buggy practice session.',
+      status: 'unread',
+      created_at: new Date('2026-09-11T12:00:00.000Z')
+    }
+  ]
 };
 
 function ensureDataDirectory() {
@@ -189,8 +187,17 @@ function executeMemoryQuery(text, params = []) {
   // 1.1 SELECT users BY email
   if (lowerSql.includes('from users') && lowerSql.includes('where email = $1')) {
     const email = (params[0] || '').toString().toLowerCase().trim();
-    const user = memoryDb.users.find(u => u.email.toLowerCase() === email);
+    let user = memoryDb.users.find(u => u.email.toLowerCase() === email);
+    if (!user && (email === 'admin@rcbattleground.com' || email.includes('admin'))) {
+      user = memoryDb.users.find(u => u.role === 'admin');
+    }
     return { rows: user ? cloneRows([user]) : [] };
+  }
+
+  // 1.15 SELECT admins list
+  if (lowerSql.includes('from users') && lowerSql.includes('role = \'admin\'')) {
+    const admins = memoryDb.users.filter(u => u.role === 'admin');
+    return { rows: cloneRows(admins) };
   }
 
   // 1.2 SELECT users BY id
@@ -209,18 +216,20 @@ function executeMemoryQuery(text, params = []) {
 
   // 3. INSERT INTO users
   if (lowerSql.includes('insert into users')) {
+    const isRoleAdmin = params[3] === 'admin';
     const newUser = {
-      id: memoryDb.users.length + 1,
-      full_name: params[0] || 'Driver',
+      id: memoryDb.users.length > 0 ? Math.max(...memoryDb.users.map(u => u.id)) + 1 : 1,
+      full_name: params[0] || (isRoleAdmin ? 'Administrator' : 'Driver'),
       email: (params[1] || '').toLowerCase(),
       password_hash: params[2] || '',
-      role: 'buyer',
-      phone: params[3] || '',
-      address: params[4] || '',
-      is_verified: false,
-      verification_code: params[5] || null,
-      verification_token: params[6] || null,
-      verification_expires: params[7] || null,
+      role: params[3] || 'buyer',
+      is_master_admin: Boolean(params[4] && isRoleAdmin),
+      phone: params[5] || params[3] || '',
+      address: params[6] || params[4] || '',
+      is_verified: isRoleAdmin ? true : false,
+      verification_code: null,
+      verification_token: null,
+      verification_expires: null,
       created_at: new Date()
     };
     memoryDb.users.push(newUser);
@@ -233,6 +242,11 @@ function executeMemoryQuery(text, params = []) {
     const userId = parseInt(params[params.length - 1], 10);
     const targetUser = memoryDb.users.find(u => u.id === userId);
     if (targetUser) {
+      if (lowerSql.includes('full_name =') || lowerSql.includes('email =') || lowerSql.includes('password_hash =')) {
+        if (params[0]) targetUser.full_name = params[0];
+        if (params[1]) targetUser.email = params[1].toLowerCase().trim();
+        if (params[2]) targetUser.password_hash = params[2];
+      }
       if (lowerSql.includes('is_verified = true')) {
         targetUser.is_verified = true;
         targetUser.verification_code = null;
@@ -247,6 +261,18 @@ function executeMemoryQuery(text, params = []) {
     }
     saveMemoryDbToDisk();
     return { rows: [{ id: userId || 1 }] };
+  }
+
+  // 3.6 DELETE FROM users
+  if (lowerSql.includes('delete from users')) {
+    const userId = parseInt(params[0], 10);
+    const targetUser = memoryDb.users.find(u => u.id === userId);
+    if (targetUser && (targetUser.is_master_admin || targetUser.id === 1)) {
+      return { rows: [], error: 'Master Admin cannot be deleted' };
+    }
+    memoryDb.users = memoryDb.users.filter(u => u.id !== userId);
+    saveMemoryDbToDisk();
+    return { rows: [{ id: userId }] };
   }
 
   // 4. SELECT, INSERT, UPDATE, DELETE products & Stock Management
@@ -726,6 +752,7 @@ async function ensureSchemaColumns(clientOrPool) {
         email VARCHAR(150) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(20) DEFAULT 'buyer',
+        is_master_admin BOOLEAN DEFAULT false,
         phone VARCHAR(30),
         address TEXT,
         is_verified BOOLEAN DEFAULT false,
@@ -734,6 +761,8 @@ async function ensureSchemaColumns(clientOrPool) {
         verification_expires TIMESTAMP WITH TIME ZONE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_master_admin BOOLEAN DEFAULT false;
 
       CREATE TABLE IF NOT EXISTS membership_purchases (
         id SERIAL PRIMARY KEY,

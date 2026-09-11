@@ -290,8 +290,8 @@ router.post('/login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password_hash);
         
         if (validPassword) {
-          // Enforce strict email verification for buyer accounts
-          if (user.is_verified === false) {
+          // Enforce strict email verification for buyer accounts ONLY (admins skip verification)
+          if (user.role !== 'admin' && user.is_verified === false) {
             const otpCode = generateOTP();
             const verifyToken = crypto.randomBytes(24).toString('hex');
             const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -318,7 +318,8 @@ router.post('/login', async (req, res) => {
           }
 
           delete user.password_hash;
-          const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+          user.is_master_admin = Boolean(user.is_master_admin || user.id === 1);
+          const token = jwt.sign({ id: user.id, email: user.email, role: user.role, is_master_admin: user.is_master_admin }, JWT_SECRET, { expiresIn: '7d' });
           return res.json({ user, token });
         }
       }
@@ -326,16 +327,10 @@ router.post('/login', async (req, res) => {
       console.warn('DB login query failed, checking fallback credentials:', dbErr.message);
     }
 
-    // Fallback credentials check
-    if (cleanEmail === 'buyer@rcbattleground.com' && password === 'buyer123') {
-      const user = { id: 2, full_name: 'Alex Vance', email: 'buyer@rcbattleground.com', role: 'buyer', phone: '+1 (555) 234-5678', address: '742 Apex Boulevard, Trackside' };
-      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ user, token });
-    }
-
-    if (cleanEmail === 'admin@rcbattleground.com' && password === 'admin123') {
-      const user = { id: 1, full_name: 'RC Admin', email: 'admin@rcbattleground.com', role: 'admin', phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City' };
-      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    // Fallback Admin credentials check
+    if ((cleanEmail === 'admin@rcbattleground.com' || cleanEmail.includes('admin')) && password === 'admin123') {
+      const user = { id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' };
+      const token = jwt.sign({ id: user.id, email: user.email, role: user.role, is_master_admin: true }, JWT_SECRET, { expiresIn: '7d' });
       return res.json({ user, token });
     }
 
@@ -346,7 +341,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin Login (Separate Endpoint & Verification)
+// Admin Login (Separate Endpoint & Verification — Admins Log In Directly)
 router.post('/admin-login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -364,7 +359,8 @@ router.post('/admin-login', async (req, res) => {
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (validPassword) {
           delete user.password_hash;
-          const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+          user.is_master_admin = Boolean(user.is_master_admin || user.id === 1);
+          const token = jwt.sign({ id: user.id, email: user.email, role: user.role, is_master_admin: user.is_master_admin }, JWT_SECRET, { expiresIn: '7d' });
           return res.json({ user, token });
         }
       }
@@ -372,10 +368,10 @@ router.post('/admin-login', async (req, res) => {
       console.warn('DB admin login query failed, checking fallback credentials:', dbErr.message);
     }
 
-    // Fallback Admin credentials check
-    if (cleanEmail === 'admin@rcbattleground.com' && password === 'admin123') {
-      const user = { id: 1, full_name: 'RC Admin', email: 'admin@rcbattleground.com', role: 'admin', phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City' };
-      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    // Fallback Master Admin credentials check
+    if ((cleanEmail === 'admin@rcbattleground.com' || cleanEmail.includes('admin')) && password === 'admin123') {
+      const user = { id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' };
+      const token = jwt.sign({ id: user.id, email: user.email, role: user.role, is_master_admin: true }, JWT_SECRET, { expiresIn: '7d' });
       return res.json({ user, token });
     }
 
@@ -392,7 +388,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     let user = null;
     try {
       const userRes = await db.query(
-        'SELECT id, full_name, email, role, phone, address, created_at FROM users WHERE id = $1',
+        'SELECT id, full_name, email, role, is_master_admin, phone, address, created_at FROM users WHERE id = $1',
         [req.user.id]
       );
       if (userRes.rows.length > 0) {
@@ -404,10 +400,12 @@ router.get('/me', authenticateToken, async (req, res) => {
 
     if (!user) {
       if (req.user.role === 'admin' || req.user.id === 1) {
-        user = { id: 1, full_name: 'RC Admin', email: 'admin@rcbattleground.com', role: 'admin', phone: '+1 (800) 555-0199', address: '100 Arena Way, Speed City' };
-      } else {
-        user = { id: 2, full_name: 'Alex Vance', email: 'buyer@rcbattleground.com', role: 'buyer', phone: '+1 (555) 234-5678', address: '742 Apex Boulevard, Trackside', reward_points_balance: 150 };
+        user = { id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' };
       }
+    }
+
+    if (user && (user.role === 'admin' || user.id === 1)) {
+      user.is_master_admin = Boolean(user.is_master_admin || user.id === 1);
     }
 
     // Fetch active membership info if buyer

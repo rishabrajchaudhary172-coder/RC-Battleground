@@ -219,5 +219,206 @@ router.post('/test-email', authenticateToken, requireAdmin, async (req, res) => 
     res.status(500).json({ success: false, error: err.message });
   }
 });
+// ADMIN MANAGEMENT ENDPOINTS (MASTER ADMIN "SECOND LIEUTENANT" CONTROLS)
+// =========================================================================
+
+// GET List of All Admin Accounts & Max Admin Limit
+router.get('/admins-list', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`SELECT id, full_name, email, role, is_master_admin, created_at FROM users WHERE role = 'admin' ORDER BY id ASC`);
+    
+    let maxAdminLimit = 5;
+    try {
+      const limitRes = await db.query(`SELECT value FROM site_settings WHERE key = 'max_admin_limit'`);
+      if (limitRes.rows.length > 0 && limitRes.rows[0].value) {
+        maxAdminLimit = parseInt(limitRes.rows[0].value.limit || limitRes.rows[0].value, 10) || 5;
+      }
+    } catch (e) {}
+
+    const admins = result.rows.map(a => ({
+      ...a,
+      is_master_admin: Boolean(a.is_master_admin || a.id === 1)
+    }));
+
+    res.json({
+      admins,
+      max_admin_limit: maxAdminLimit,
+      current_admin_count: admins.length
+    });
+  } catch (err) {
+    console.error('Fetch admins list error:', err);
+    res.status(500).json({ error: 'Server error fetching admins list' });
+  }
+});
+
+// POST Create New Admin Account (Master Admin Only)
+router.post('/create-admin', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { full_name, email, password } = req.body;
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({ error: 'Full Name, Email/ID, and Password are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check current admin count vs max limit
+    const countRes = await db.query(`SELECT COUNT(id) AS count FROM users WHERE role = 'admin'`);
+    const currentCount = parseInt(countRes.rows[0]?.count || 0, 10);
+
+    let maxAdminLimit = 5;
+    try {
+      const limitRes = await db.query(`SELECT value FROM site_settings WHERE key = 'max_admin_limit'`);
+      if (limitRes.rows.length > 0 && limitRes.rows[0].value) {
+        maxAdminLimit = parseInt(limitRes.rows[0].value.limit || limitRes.rows[0].value, 10) || 5;
+      }
+    } catch (e) {}
+
+    if (currentCount >= maxAdminLimit) {
+      return res.status(400).json({
+        error: `Admin limit reached (${currentCount}/${maxAdminLimit}). Please increase the max admin limit to add more admins.`
+      });
+    }
+
+    // Check email uniqueness
+    const existingRes = await db.query(`SELECT id FROM users WHERE email = $1`, [cleanEmail]);
+    if (existingRes.rows.length > 0) {
+      return res.status(400).json({ error: 'An account with this email/ID already exists' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const insertRes = await db.query(
+      `INSERT INTO users (full_name, email, password_hash, role, is_master_admin, is_verified, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP) RETURNING id, full_name, email, role, is_master_admin, created_at`,
+      [full_name.trim(), cleanEmail, passwordHash, 'admin', false, true]
+    );
+
+    res.json({
+      message: `✅ New admin account '${full_name}' created successfully!`,
+      admin: insertRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Create admin error:', err);
+    res.status(500).json({ error: 'Server error creating new admin account' });
+  }
+});
+
+// PUT Edit Admin Account (Master Admin Edits any Admin or Admin edits own ID/Password)
+router.put('/edit-admin/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { full_name, email, password } = req.body;
+
+    const targetUserId = parseInt(id, 10);
+    const isSelf = req.user.id === targetUserId;
+    const isMaster = Boolean(req.user.is_master_admin || req.user.id === 1);
+
+    if (!isSelf && !isMaster) {
+      return res.status(403).json({ error: 'Only Master Admin (Second Lieutenant) can edit other admin accounts' });
+    }
+
+    const cleanEmail = email ? email.toLowerCase().trim() : null;
+
+    if (cleanEmail) {
+      const existingRes = await db.query(`SELECT id FROM users WHERE email = $1 AND id != $2`, [cleanEmail, targetUserId]);
+      if (existingRes.rows.length > 0) {
+        return res.status(400).json({ error: 'Email/ID already in use by another account' });
+      }
+    }
+
+    let passwordHash = null;
+    if (password && password.trim().length > 0) {
+      const bcrypt = require('bcryptjs');
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    if (passwordHash) {
+      await db.query(
+        `UPDATE users SET full_name = COALESCE($1, full_name), email = COALESCE($2, email), password_hash = $3 WHERE id = $4`,
+        [full_name ? full_name.trim() : null, cleanEmail, passwordHash, targetUserId]
+      );
+    } else {
+      await db.query(
+        `UPDATE users SET full_name = COALESCE($1, full_name), email = COALESCE($2, email) WHERE id = $3`,
+        [full_name ? full_name.trim() : null, cleanEmail, targetUserId]
+      );
+    }
+
+    const updatedRes = await db.query(`SELECT id, full_name, email, role, is_master_admin FROM users WHERE id = $1`, [targetUserId]);
+
+    res.json({
+      message: `✅ Admin account updated successfully!`,
+      admin: updatedRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Edit admin error:', err);
+    res.status(500).json({ error: 'Server error updating admin account' });
+  }
+});
+
+// DELETE Admin Account (Master Admin Only)
+router.delete('/delete-admin/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const targetUserId = parseInt(id, 10);
+
+    const isMaster = Boolean(req.user.is_master_admin || req.user.id === 1);
+    if (!isMaster) {
+      return res.status(403).json({ error: 'Only Master Admin (Second Lieutenant) can delete admin accounts' });
+    }
+
+    const userRes = await db.query(`SELECT id, full_name, is_master_admin FROM users WHERE id = $1`, [targetUserId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Target admin account not found' });
+    }
+
+    const targetUser = userRes.rows[0];
+    if (targetUser.is_master_admin || targetUser.id === 1) {
+      return res.status(400).json({ error: 'Master Admin (Second Lieutenant) account cannot be deleted' });
+    }
+
+    await db.query(`DELETE FROM users WHERE id = $1`, [targetUserId]);
+
+    res.json({
+      message: `✅ Admin account '${targetUser.full_name}' deleted successfully!`
+    });
+  } catch (err) {
+    console.error('Delete admin error:', err);
+    res.status(500).json({ error: 'Server error deleting admin account' });
+  }
+});
+
+// PUT Update Max Admin Limit Setting (Master Admin Only)
+router.put('/update-admin-limit', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { max_admin_limit } = req.body;
+    const newLimit = parseInt(max_admin_limit, 10);
+
+    if (!newLimit || newLimit < 1) {
+      return res.status(400).json({ error: 'Max admin limit must be a positive number greater than 0' });
+    }
+
+    const isMaster = Boolean(req.user.is_master_admin || req.user.id === 1);
+    if (!isMaster) {
+      return res.status(403).json({ error: 'Only Master Admin (Second Lieutenant) can update the max admin limit' });
+    }
+
+    await db.query(
+      `INSERT INTO site_settings (key, value) VALUES ('max_admin_limit', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+      [JSON.stringify({ limit: newLimit })]
+    );
+
+    res.json({
+      message: `✅ Max admin account limit updated to ${newLimit}!`,
+      max_admin_limit: newLimit
+    });
+  } catch (err) {
+    console.error('Update admin limit error:', err);
+    res.status(500).json({ error: 'Server error updating admin limit setting' });
+  }
+});
 
 module.exports = router;

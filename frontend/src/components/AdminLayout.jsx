@@ -44,6 +44,7 @@ export default function AdminLayout() {
     { label: 'Buyers & Users', path: '/admin/buyers', icon: Users },
     { label: 'Orders & Bookings', path: '/admin/orders', icon: ShoppingBag },
     { label: 'Payments & Email Logs', path: '/admin/payments', icon: CreditCard },
+    { label: 'Manage Admin Accounts', path: '/admin/admins', icon: ShieldCheck },
     { label: 'Membership & Rewards', path: '/admin/settings', icon: Crown },
     { label: 'Edit Site Content', path: '/admin/content', icon: FileText },
   ];

@@ -6,8 +6,8 @@ import { ShieldCheck, Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
 export default function AdminLogin() {
   const { adminLogin } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@rcbattleground.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -92,24 +92,7 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <div className="p-3 bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-400 font-bold uppercase text-[10px]">Default Admin Credentials:</span>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('admin@rcbattleground.com');
-                setPassword('admin123');
-                setError('');
-              }}
-              className="text-[10px] font-bold text-white bg-zinc-800 border border-zinc-700 px-2 py-0.5 hover:bg-zinc-700 uppercase"
-            >
-              Auto-fill Credentials
-            </button>
-          </div>
-          <div className="text-white font-bold">Email: admin@rcbattleground.com</div>
-          <div className="text-white font-bold">Password: admin123</div>
-        </div>
+
       </div>
     </div>
   );

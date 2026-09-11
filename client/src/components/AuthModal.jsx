@@ -492,34 +492,7 @@ export default function AuthModal({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* Quick Demo Credentials Assistant */}
-            {!isRegister && (
-              <div className="mb-4 p-3 bg-zinc-900 border border-zinc-800 font-mono text-[11px] space-y-2 rounded-lg">
-                <div className="text-zinc-400 font-bold uppercase text-[10px]">Quick Demo Sign In:</div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData({ ...formData, email: 'buyer@rcbattleground.com', password: 'buyer123' });
-                      setError('');
-                    }}
-                    className="flex-1 py-1.5 px-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold border border-zinc-700 transition-colors uppercase text-[10px] rounded"
-                  >
-                    Auto-fill Buyer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData({ ...formData, email: 'admin@rcbattleground.com', password: 'admin123' });
-                      setError('');
-                    }}
-                    className="flex-1 py-1.5 px-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold border border-zinc-700 transition-colors uppercase text-[10px] rounded"
-                  >
-                    Auto-fill Admin
-                  </button>
-                </div>
-              </div>
-            )}
+
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs font-mono">
               {isRegister && (

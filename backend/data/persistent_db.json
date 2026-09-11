@@ -1,26 +1,17 @@
 {
+  "max_admin_limit": 5,
   "users": [
     {
       "id": 1,
-      "full_name": "RC Admin",
+      "full_name": "Second Lieutenant",
       "email": "admin@rcbattleground.com",
-      "password_hash": "$2a$10$da06cnpbRfWkVLjoPFlC4O29KXjQZte0wqFHtrLz6W6kRqGKaAy/K",
+      "password_hash": "$2a$10$bT5BvjTz.xnxPrXgx0/xIOtdxZNGpD4W6ppx5aryDIGFMplAPJ08K",
       "role": "admin",
       "is_verified": true,
       "phone": "+1 (800) 555-0199",
       "address": "100 Arena Way, Speed City",
-      "created_at": "2026-09-11T08:48:38.737Z"
-    },
-    {
-      "id": 2,
-      "full_name": "Alex Vance",
-      "email": "buyer@rcbattleground.com",
-      "password_hash": "$2a$10$68m/xzZVWvkbe3R9WpmkDOae4AsX2R.G9jlKr4GORjeEzYo2s0n5.",
-      "role": "buyer",
-      "is_verified": true,
-      "phone": "+1 (555) 234-5678",
-      "address": "742 Apex Boulevard, Trackside",
-      "created_at": "2026-09-11T08:48:38.737Z"
+      "created_at": "2026-09-11T08:48:38.737Z",
+      "is_master_admin": true
     },
     {
       "id": 3,
@@ -49,6 +40,66 @@
       "verification_token": "bc271f5636e2f699104498e2d2843f2a2aab5c463cb5b2cf",
       "verification_expires": "2026-09-11T09:07:13.216Z",
       "created_at": "2026-09-11T08:52:13.224Z"
+    },
+    {
+      "id": 5,
+      "full_name": "Captain Roger",
+      "email": "captain.roger@rcbattleground.com",
+      "password_hash": "$2a$10$FIBNzsNBZU8fHmY0nvJHhOnN4OHlnR3IXesY1CydiMxUDolXjvzFS",
+      "role": "buyer",
+      "is_master_admin": false,
+      "phone": "",
+      "address": "",
+      "is_verified": false,
+      "verification_code": null,
+      "verification_token": null,
+      "verification_expires": null,
+      "created_at": "2026-09-11T11:16:28.997Z"
+    },
+    {
+      "id": 6,
+      "full_name": "Lieutenant Dan",
+      "email": "dan@rcbattleground.com",
+      "password_hash": "$2a$10$jEQBYL2hbkiMSg5g8bZZF.nZlQSsz9zHcugGRsYJhYYryax3BL4A.",
+      "role": "buyer",
+      "is_master_admin": false,
+      "phone": "",
+      "address": "",
+      "is_verified": false,
+      "verification_code": null,
+      "verification_token": null,
+      "verification_expires": null,
+      "created_at": "2026-09-11T11:16:29.201Z"
+    },
+    {
+      "id": 7,
+      "full_name": "Captain Roger",
+      "email": "captain.roger@rcbattleground.com",
+      "password_hash": "$2a$10$5Qxj0Qalm/jdmBRiUYu2A.U7xjErCet.EIJdXa0FI66Ks4WQ0KNPi",
+      "role": "buyer",
+      "is_master_admin": false,
+      "phone": "",
+      "address": "",
+      "is_verified": false,
+      "verification_code": null,
+      "verification_token": null,
+      "verification_expires": null,
+      "created_at": "2026-09-11T12:25:45.567Z"
+    },
+    {
+      "id": 8,
+      "full_name": "Lieutenant Dan",
+      "email": "dan@rcbattleground.com",
+      "password_hash": "$2a$10$/Npn83GJlJG06XhNKySlPuf.Ow9yQHZViI3yOKPVDVXR0Utq6TIiu",
+      "role": "buyer",
+      "is_master_admin": false,
+      "phone": "",
+      "address": "",
+      "is_verified": false,
+      "verification_code": null,
+      "verification_token": null,
+      "verification_expires": null,
+      "created_at": "2026-09-11T12:25:45.761Z"
     }
   ],
   "categories": [
@@ -370,6 +421,92 @@
   ],
   "email_logs": [
     {
+      "id": 9,
+      "recipient": "dangianish2@gmail.com",
+      "subject": "🔐 Verify Your Personal Email Account – RC Battleground (449209)",
+      "event_type": "email_verification",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 13,
+        "verification_token": "49ae590bea9af693e21db0555ab3c87c5f844a7b40317325",
+        "messageId": "<e401f52b-0ec3-863a-68bc-14a64d190aac@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T13:42:43.512Z"
+    },
+    {
+      "id": 8,
+      "recipient": "dangianish2@gmail.com",
+      "subject": "🔐 Verify Your Personal Email Account – RC Battleground (806512)",
+      "event_type": "email_verification",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 13,
+        "verification_token": "58ba680019ed6df23a13be9c609c7f775273f7bedd4a69b1",
+        "messageId": "<4d47f4ab-3c79-016a-fae0-f4241a818360@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T10:37:13.524Z"
+    },
+    {
+      "id": 7,
+      "recipient": "dangianish2@gmail.com",
+      "subject": "🔐 Verify Your Personal Email Account – RC Battleground (393491)",
+      "event_type": "email_verification",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 13,
+        "verification_token": "9e6314144ca33b7241dce28dca38b6a9b0c930699877eafd",
+        "messageId": "<1a097350-29c6-801d-d330-9661a850d887@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T10:37:01.707Z"
+    },
+    {
+      "id": 6,
+      "recipient": "sanjamrockstar743@gmail.com",
+      "subject": "🏎️ New Buyer Registration – RC Battleground",
+      "event_type": "buyer_registration",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 13,
+        "messageId": "<db5fe0b3-4d21-4468-9e93-279aea1927d8@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T08:52:17.526Z"
+    },
+    {
+      "id": 5,
+      "recipient": "dangianish2@gmail.com",
+      "subject": "🔐 Verify Your Personal Email Account – RC Battleground (364074)",
+      "event_type": "email_verification",
+      "status": "sent",
+      "error_message": null,
+      "metadata": {
+        "user_id": 13,
+        "verification_token": "bc271f5636e2f699104498e2d2843f2a2aab5c463cb5b2cf",
+        "messageId": "<11cb1eb9-c471-bfe9-a262-a84ef5faec06@gmail.com>",
+        "attempt": 1
+      },
+      "created_at": "2026-09-11T08:52:17.190Z"
+    },
+    {
+      "id": 4,
+      "recipient": "+977 9865367887",
+      "subject": "📱 SMS Notice: 🏎️ RC Battleground: Your driver verific...",
+      "event_type": "sms_verification",
+      "status": "simulated",
+      "error_message": "Live SMS API credentials not set in .env",
+      "metadata": {
+        "user_id": 13
+      },
+      "created_at": "2026-09-11T08:52:13.235Z"
+    },
+    {
       "id": 3,
       "recipient": "persistent_driver_1789116530528@gmail.com",
       "subject": "🔐 Verify Your Personal Email Account – RC Battleground (163753)",
@@ -409,6 +546,17 @@
         "user_id": 12
       },
       "created_at": "2026-09-11T08:48:50.853Z"
+    }
+  ],
+  "support_inquiries": [
+    {
+      "id": 1,
+      "name": "Alex Vance",
+      "email": "driver@rcbattleground.com",
+      "subject": "Track Booking & Technical Tuning",
+      "message": "Requesting arena booking for Sector 7 Dirt Arena on Sunday for 1/10 scale 4WD buggy practice session.",
+      "status": "unread",
+      "created_at": "2026-09-11T12:00:00.000Z"
     }
   ]
 }
