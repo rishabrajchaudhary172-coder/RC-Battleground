@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoImg from '../assets/logo_rc_battleground.png';
 import { 
   LayoutDashboard, 
   Package, 
@@ -55,10 +56,13 @@ export default function AdminLayout() {
         <div>
           {/* Admin Header */}
           <div className="p-6 border-b border-zinc-900">
-            <Link to="/" className="flex items-center space-x-3 mb-2">
-              <div className="w-8 h-8 bg-white text-black font-black text-lg flex items-center justify-center font-mono">
-                RC
-              </div>
+            <Link to="/" className="flex items-center space-x-3 mb-2" title="Logo RC-battle ground">
+              <img
+                src={logoImg || "/logo_rc_battleground.png"}
+                alt="Logo RC-battle ground"
+                className="w-8 h-8 object-contain filter drop-shadow-md brightness-110"
+                onError={(e) => { e.target.onerror = null; e.target.src = '/logo_rc_battleground.png'; }}
+              />
               <span className="font-black text-sm uppercase tracking-widest text-white font-mono">ADMIN PORTAL</span>
             </Link>
             <div className="text-[11px] font-mono text-zinc-400 truncate">

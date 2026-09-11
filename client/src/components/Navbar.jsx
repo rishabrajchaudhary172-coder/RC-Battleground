@@ -24,6 +24,7 @@ import {
   Mail
 } from 'lucide-react';
 import SideNav from './SideNav';
+import logoImg from '../assets/logo_rc_battleground.png';
 
 export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
   const { user, logout } = useAuth();
@@ -105,9 +106,10 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
 
             <Link to="/" className="flex items-center space-x-3 group" title="Logo RC-battle ground">
               <img
-                src="/logo_rc_battleground.png"
+                src={logoImg || "/logo_rc_battleground.png"}
                 alt="Logo RC-battle ground"
                 className="w-11 h-11 object-contain transition-transform group-hover:scale-105 filter drop-shadow-md brightness-110"
+                onError={(e) => { e.target.onerror = null; e.target.src = '/logo_rc_battleground.png'; }}
               />
               <div className="flex flex-col">
                 <span className="font-black tracking-widest text-lg text-white leading-tight uppercase font-sans">

@@ -8,6 +8,7 @@ import {
   User, LogOut, ShieldCheck, Award, Sun, Moon, DollarSign,
   Info, Mail, ChevronRight, Sparkles
 } from 'lucide-react';
+import logoImg from '../assets/logo_rc_battleground.png';
 
 export default function SideNav({ isOpen, onClose, onOpenAuthModal }) {
   const { user, logout } = useAuth();
@@ -56,10 +57,13 @@ export default function SideNav({ isOpen, onClose, onOpenAuthModal }) {
         <div className={`shrink-0 p-5 border-b flex items-center justify-between ${
           isLight ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-800 bg-zinc-900/90'
         }`}>
-          <Link to="/" onClick={onClose} className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-white text-black font-black text-xl flex items-center justify-center font-mono ring-1 ring-zinc-400 group-hover:scale-105 transition-transform">
-              RC
-            </div>
+          <Link to="/" onClick={onClose} className="flex items-center gap-3 group" title="Logo RC-battle ground">
+            <img
+              src={logoImg || "/logo_rc_battleground.png"}
+              alt="Logo RC-battle ground"
+              className="w-10 h-10 object-contain transition-transform group-hover:scale-105 filter drop-shadow-md brightness-110"
+              onError={(e) => { e.target.onerror = null; e.target.src = '/logo_rc_battleground.png'; }}
+            />
             <div>
               <span className={`font-black text-base uppercase tracking-widest block font-sans ${
                 isLight ? 'text-black' : 'text-white'

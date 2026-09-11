@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
+import logoImg from '../assets/logo_rc_battleground.png';
 
 export default function Footer() {
   return (
@@ -14,9 +15,10 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center space-x-3" title="Logo RC-battle ground">
               <img
-                src="/logo_rc_battleground.png"
+                src={logoImg || "/logo_rc_battleground.png"}
                 alt="Logo RC-battle ground"
                 className="w-10 h-10 object-contain filter drop-shadow-md brightness-110"
+                onError={(e) => { e.target.onerror = null; e.target.src = '/logo_rc_battleground.png'; }}
               />
               <span className="font-black tracking-widest text-lg text-white uppercase font-sans">RC BATTLEGROUND</span>
             </div>
