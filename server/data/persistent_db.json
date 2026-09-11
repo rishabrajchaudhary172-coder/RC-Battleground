@@ -1,0 +1,358 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "full_name": "RC Admin",
+      "email": "admin@rcbattleground.com",
+      "password_hash": "$2a$10$da06cnpbRfWkVLjoPFlC4O29KXjQZte0wqFHtrLz6W6kRqGKaAy/K",
+      "role": "admin",
+      "is_verified": true,
+      "phone": "+1 (800) 555-0199",
+      "address": "100 Arena Way, Speed City",
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 2,
+      "full_name": "Alex Vance",
+      "email": "buyer@rcbattleground.com",
+      "password_hash": "$2a$10$68m/xzZVWvkbe3R9WpmkDOae4AsX2R.G9jlKr4GORjeEzYo2s0n5.",
+      "role": "buyer",
+      "is_verified": true,
+      "phone": "+1 (555) 234-5678",
+      "address": "742 Apex Boulevard, Trackside",
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 3,
+      "full_name": "Persistent Driver",
+      "email": "persistent_driver_1789116530528@gmail.com",
+      "password_hash": "$2a$10$MfunvTsXfWozl0SYj9Ql8ed6Ev/QVx5j6WWUrd501xjOUUJK.zWcW",
+      "role": "buyer",
+      "phone": "+977 9768532969",
+      "address": "Kathmandu, Nepal",
+      "is_verified": false,
+      "verification_code": "163753",
+      "verification_token": "4f94b1e2ba0e074a3c267dc93d5b116937e16b20f04a8851",
+      "verification_expires": "2026-09-11T09:03:50.773Z",
+      "created_at": "2026-09-11T08:48:50.780Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Off-Road Buggies",
+      "slug": "off-road-buggies",
+      "description": "High-speed all-terrain electric buggies built for dirt, jumps, and gravel.",
+      "image_url": "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": 2,
+      "name": "Drift Cars",
+      "slug": "drift-cars",
+      "description": "Precision tuned 1/10 scale drift machines with realistic counter-steering geometry.",
+      "image_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": 3,
+      "name": "Monster Trucks",
+      "slug": "monster-trucks",
+      "description": "Heavy-duty 4WD bashing trucks with oil-filled shocks and massive rubber tires.",
+      "image_url": "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": 4,
+      "name": "Rock Crawlers",
+      "slug": "rock-crawlers",
+      "description": "Scale 4x4 crawlers engineered for extreme obstacle clearance and steep inclines.",
+      "image_url": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": 5,
+      "name": "Speed On-Road",
+      "slug": "speed-on-road",
+      "description": "Sub-3-second 0-60 mph carbon fiber chassis street racers.",
+      "image_url": "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": 6,
+      "name": "Racing Drones",
+      "slug": "racing-drones",
+      "description": "FPV racing quadcopters designed for high-speed indoor and outdoor gates.",
+      "image_url": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "category_name": "Off-Road Buggies",
+      "category_slug": "off-road-buggies",
+      "name": "Apex Predator 4WD Off-Road Buggy",
+      "slug": "apex-predator-4wd-off-road-buggy",
+      "description": "The Apex Predator is a 1/10 scale brushless ready-to-run buggy capable of speeds up to 65+ MPH.",
+      "price": 349.99,
+      "stock": 14,
+      "seller_name": "RC Battleground Official",
+      "is_featured": true,
+      "images": [
+        "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=1000&q=80"
+      ],
+      "specs": {
+        "scale": "1/10",
+        "max_speed": "65+ MPH",
+        "motor": "3660 3300KV Brushless"
+      },
+      "avg_rating": "5.0",
+      "review_count": 1,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 2,
+      "category_id": 2,
+      "category_name": "Drift Cars",
+      "category_slug": "drift-cars",
+      "name": "Tokyo Spec Nissan GT-R Drift Racer",
+      "slug": "tokyo-spec-nissan-gtr-drift-racer",
+      "description": "Engineered for smooth indoor polished concrete and asphalt drifting.",
+      "price": 279.5,
+      "stock": 9,
+      "seller_name": "DriftCraft Garage",
+      "is_featured": true,
+      "images": [
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80"
+      ],
+      "specs": {
+        "scale": "1/10",
+        "drivetrain": "RWD Counter-Steer"
+      },
+      "avg_rating": "5.0",
+      "review_count": 1,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 3,
+      "category_id": 3,
+      "category_name": "Monster Trucks",
+      "category_slug": "monster-trucks",
+      "name": "Titan Crusher 6S Monster Bashing Truck",
+      "slug": "titan-crusher-6s-monster-bashing-truck",
+      "description": "Unstoppable 1/8 scale stunt truck built to absorb massive double-flips and high jumps.",
+      "price": 529,
+      "stock": 6,
+      "seller_name": "RC Battleground Official",
+      "is_featured": true,
+      "images": [
+        "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1000&q=80"
+      ],
+      "specs": {
+        "scale": "1/8",
+        "max_speed": "70+ MPH on 6S"
+      },
+      "avg_rating": "5.0",
+      "review_count": 1,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 4,
+      "category_id": 4,
+      "category_name": "Rock Crawlers",
+      "category_slug": "rock-crawlers",
+      "name": "Trail Blazer 4x4 Scale Rock Crawler",
+      "slug": "trail-blazer-4x4-scale-rock-crawler",
+      "description": "High-torque locked axle crawler with portal axles for extreme ground clearance.",
+      "price": 389,
+      "stock": 12,
+      "seller_name": "Summit Crawlers",
+      "is_featured": false,
+      "images": [
+        "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80"
+      ],
+      "specs": {
+        "scale": "1/10",
+        "transmission": "Dual Speed"
+      },
+      "avg_rating": "0.0",
+      "review_count": 0,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 5,
+      "category_id": 5,
+      "category_name": "Speed On-Road",
+      "category_slug": "speed-on-road",
+      "name": "Veloce Carbon GT On-Road Supercar",
+      "slug": "veloce-carbon-gt-on-road-supercar",
+      "description": "Ultra-low aerodynamic profile designed for track asphalt racing.",
+      "price": 499.99,
+      "stock": 5,
+      "seller_name": "Velocity Tech",
+      "is_featured": true,
+      "images": [
+        "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=1000&q=80"
+      ],
+      "specs": {
+        "scale": "1/7",
+        "top_speed": "85+ MPH"
+      },
+      "avg_rating": "0.0",
+      "review_count": 0,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    },
+    {
+      "id": 6,
+      "category_id": 6,
+      "category_name": "Racing Drones",
+      "category_slug": "racing-drones",
+      "name": "Falcon FPV Racing Drone Kit",
+      "slug": "falcon-fpv-racing-drone-kit",
+      "description": "Carbon fiber quadcopter frame featuring 4k 60fps low-latency FPV video transmitter.",
+      "price": 319,
+      "stock": 18,
+      "seller_name": "SkyLine Dynamics",
+      "is_featured": false,
+      "images": [
+        "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=1000&q=80"
+      ],
+      "specs": {
+        "frame": "5-inch Carbon"
+      },
+      "avg_rating": "0.0",
+      "review_count": 0,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    }
+  ],
+  "membership_plans": [
+    {
+      "id": 1,
+      "plan_name": "Rookie Racer",
+      "description": "Basic membership tier with standard point earning.",
+      "price": 0,
+      "duration_days": 365,
+      "perks": [
+        "Standard Point Earning (1x)",
+        "Standard Shipping"
+      ]
+    },
+    {
+      "id": 2,
+      "plan_name": "Pro Circuit VIP",
+      "description": "Elevated membership tier with 1.5x reward points and express shipping.",
+      "price": 19.99,
+      "duration_days": 30,
+      "perks": [
+        "1.5x Reward Points Earning",
+        "Free Express Shipping",
+        "5% Off Parts"
+      ]
+    },
+    {
+      "id": 3,
+      "plan_name": "Apex Master Pass",
+      "description": "Ultimate annual VIP pass with 2x reward points and 10% discount.",
+      "price": 149.99,
+      "duration_days": 365,
+      "perks": [
+        "2x Reward Points Earning",
+        "Free Next-Day Express Shipping",
+        "10% Storewide Discount"
+      ]
+    }
+  ],
+  "user_memberships": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "plan_id": 2,
+      "plan_name": "Pro Circuit VIP",
+      "price": 19.99,
+      "start_date": "2026-09-11T08:48:38.737Z",
+      "end_date": "2026-10-11T08:48:38.737Z",
+      "status": "active"
+    }
+  ],
+  "reward_settings": {
+    "points_per_dollar_spent": 1,
+    "dollars_per_point_redeemed": 0.05
+  },
+  "reward_points_transactions": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "type": "earned",
+      "points": 350,
+      "description": "Welcome Bonus & Pro Circuit VIP Signup",
+      "created_at": "2026-09-11T08:48:38.737Z"
+    }
+  ],
+  "reviews_ratings": [
+    {
+      "id": 1,
+      "product_id": 2,
+      "user_id": 2,
+      "rating": 5,
+      "comment": "Insane drift angles right out of the box!",
+      "is_featured": true,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    }
+  ],
+  "wishlist": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "product_id": 1,
+      "created_at": "2026-09-11T08:48:38.737Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "order_number": "RC-2026-98102",
+      "total_amount": 279.5,
+      "discount_amount": 0,
+      "points_redeemed": 0,
+      "points_earned": 280,
+      "status": "delivered",
+      "shipping_address": "742 Apex Boulevard, Trackside",
+      "payment_method": "Credit Card (Visa ending 4242)",
+      "created_at": "2026-09-11T08:48:38.737Z"
+    }
+  ],
+  "order_items": [
+    {
+      "id": 1,
+      "order_id": 1,
+      "product_id": 1,
+      "quantity": 1,
+      "unit_price": 279.5
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "title": "RC Battleground 4WD Dirt Grand Prix 2026",
+      "slug": "rc-battleground-4wd-dirt-grand-prix-2026",
+      "event_date": "2026-09-25T08:48:38.737Z",
+      "location": "Sector 7 Dirt Arena",
+      "track_type": "Off-Road Clay & Dirt",
+      "description": "Premier 1/10 scale 4WD buggy championship.",
+      "image_url": "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=1000&q=80",
+      "entry_fee": 25,
+      "max_participants": 32,
+      "registered_count": 14
+    }
+  ],
+  "site_content": [
+    {
+      "id": 1,
+      "key": "home_banner",
+      "title": "UNLEASH HIGH-SPEED DOMINANCE",
+      "content": "The premier monochrome marketplace for professional RC cars, high-output bashing trucks, drift machines, and racing drones.",
+      "metadata": {
+        "button_text": "EXPLORE CATALOG",
+        "tagline": "PRECISION ENGINEERING • MAXIMUM SPEED"
+      }
+    }
+  ],
+  "email_logs": []
+}

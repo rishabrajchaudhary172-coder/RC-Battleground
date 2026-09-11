@@ -1,6 +1,10 @@
+const fs = require('fs');
+const path = require('path');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
+
+const DB_FILE_PATH = path.join(__dirname, '../data/persistent_db.json');
 
 const pool = new Pool({
   host: process.env.PGHOST || 'localhost',
@@ -113,6 +117,39 @@ const memoryDb = {
   email_logs: []
 };
 
+function ensureDataDirectory() {
+  const dir = path.dirname(DB_FILE_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function saveMemoryDbToDisk() {
+  try {
+    ensureDataDirectory();
+    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(memoryDb, null, 2), 'utf8');
+  } catch (err) {
+    console.error('⚠️ Failed to flush database persistence file:', err.message);
+  }
+}
+
+function loadMemoryDbFromDisk() {
+  try {
+    if (fs.existsSync(DB_FILE_PATH)) {
+      const rawData = fs.readFileSync(DB_FILE_PATH, 'utf8');
+      const loaded = JSON.parse(rawData);
+      if (loaded && Array.isArray(loaded.users)) {
+        Object.assign(memoryDb, loaded);
+        console.log(`📦 Database loaded ${memoryDb.users.length} persistent user accounts from disk storage!`);
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not read database persistent disk file:', err.message);
+  }
+}
+
+loadMemoryDbFromDisk();
+
 // Helper for Deep Safe Copying returned query rows
 function cloneRows(data) {
   return JSON.parse(JSON.stringify(data));
@@ -187,6 +224,7 @@ function executeMemoryQuery(text, params = []) {
       created_at: new Date()
     };
     memoryDb.users.push(newUser);
+    saveMemoryDbToDisk();
     return { rows: cloneRows([newUser]) };
   }
 
@@ -207,6 +245,7 @@ function executeMemoryQuery(text, params = []) {
         targetUser.verification_expires = params[2];
       }
     }
+    saveMemoryDbToDisk();
     return { rows: [{ id: userId || 1 }] };
   }
 
@@ -661,6 +700,10 @@ function executeMemoryQuery(text, params = []) {
   }
 
   // 14. Generic INSERT or UPDATE or DELETE
+  if (lowerSql.startsWith('insert') || lowerSql.startsWith('update') || lowerSql.startsWith('delete')) {
+    saveMemoryDbToDisk();
+  }
+
   if (lowerSql.startsWith('insert into')) {
     return { rows: [{ id: Date.now() }] };
   }
@@ -677,6 +720,34 @@ async function ensureSchemaColumns(clientOrPool) {
   if (schemaEnsured) return;
   try {
     await clientOrPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        full_name VARCHAR(120) NOT NULL,
+        email VARCHAR(150) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'buyer',
+        phone VARCHAR(30),
+        address TEXT,
+        is_verified BOOLEAN DEFAULT false,
+        verification_code VARCHAR(10),
+        verification_token VARCHAR(100),
+        verification_expires TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS membership_purchases (
+        id SERIAL PRIMARY KEY,
+        user_id INT,
+        plan_id INT,
+        plan_name VARCHAR(80),
+        amount_npr NUMERIC(12, 2) DEFAULT 0,
+        amount_usd NUMERIC(12, 2) DEFAULT 0,
+        payment_method VARCHAR(50) DEFAULT 'Credit Card',
+        transaction_ref VARCHAR(100),
+        status VARCHAR(20) DEFAULT 'completed',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS site_settings (
         id SERIAL PRIMARY KEY,
         key VARCHAR(60) UNIQUE NOT NULL,
@@ -850,6 +921,7 @@ async function query(text, params) {
     const res = await pool.query(text, params);
     pgConnected = true;
     ensureSchemaColumns(pool).catch(() => {});
+    try { executeMemoryQuery(text, params); } catch (_) {}
     return res;
   } catch (err) {
     if (pgConnected !== false) {
