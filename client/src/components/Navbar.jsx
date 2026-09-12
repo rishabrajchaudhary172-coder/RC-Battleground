@@ -121,54 +121,6 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
               </div>
             </Link>
 
-            {/* Single Dropdown Arrow Menu */}
-            <div className="relative ml-2">
-              <button
-                onClick={() => setNavDropdownOpen(!navDropdownOpen)}
-                className="px-3 py-2 text-zinc-300 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-md transition-all flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider"
-                title="Quick Page Navigation"
-              >
-                <span>EXPLORE PAGES</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${navDropdownOpen ? 'rotate-180 text-white' : 'text-zinc-400'}`} />
-              </button>
-
-              {navDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-56 bg-zinc-950 border border-zinc-800 shadow-2xl rounded-md p-2 z-50 font-mono text-xs uppercase space-y-1">
-                  <Link to="/" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Home className="w-4 h-4 text-zinc-400" />
-                    <span>Home</span>
-                  </Link>
-                  <Link to="/catalog" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <ShoppingBag className="w-4 h-4 text-zinc-400" />
-                    <span>Catalog</span>
-                  </Link>
-                  <Link to="/categories" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Layers className="w-4 h-4 text-zinc-400" />
-                    <span>Categories</span>
-                  </Link>
-                  <Link to="/events" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Calendar className="w-4 h-4 text-zinc-400" />
-                    <span>Race Events</span>
-                  </Link>
-                  <Link to="/membership" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Crown className="w-4 h-4 text-zinc-400" />
-                    <span>Membership</span>
-                  </Link>
-                  <Link to="/rewards" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Award className="w-4 h-4 text-zinc-400" />
-                    <span>Reward Points</span>
-                  </Link>
-                  <Link to="/about" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Info className="w-4 h-4 text-zinc-400" />
-                    <span>About Us</span>
-                  </Link>
-                  <Link to="/contact" onClick={() => setNavDropdownOpen(false)} className="flex items-center space-x-2.5 px-3 py-2.5 text-zinc-300 hover:bg-zinc-900 hover:text-white rounded transition-colors">
-                    <Mail className="w-4 h-4 text-zinc-400" />
-                    <span>Contact Us</span>
-                  </Link>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Quick Search & Actions */}
@@ -298,13 +250,7 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
               className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2 text-white focus:outline-none"
             />
           </form>
-          <Link to="/" className="block py-1.5 text-zinc-300 hover:text-white">Home</Link>
-          <Link to="/catalog" className="block py-1.5 text-zinc-300 hover:text-white">Catalog</Link>
-          <Link to="/events" className="block py-1.5 text-zinc-300 hover:text-white">Race Events</Link>
-          <Link to="/membership" className="block py-1.5 text-zinc-300 hover:text-white">Membership Plans</Link>
-          <Link to="/rewards" className="block py-1.5 text-zinc-300 hover:text-white">Reward Points</Link>
-          <Link to="/about" className="block py-1.5 text-zinc-300 hover:text-white">About Us</Link>
-          <Link to="/contact" className="block py-1.5 text-zinc-300 hover:text-white">Contact</Link>
+
           {onReplayIntro && (
             <button
               onClick={onReplayIntro}

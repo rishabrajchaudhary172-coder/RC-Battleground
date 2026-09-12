@@ -1,5 +1,5 @@
 {
-  "max_admin_limit": 10,
+  "max_admin_limit": 6,
   "users": [
     {
       "id": 1,
@@ -563,9 +563,9 @@
     {
       "key": "max_admin_limit",
       "value": {
-        "limit": 10
+        "limit": 6
       },
-      "updated_at": "2026-09-12T07:31:20.636Z"
+      "updated_at": "2026-09-12T07:32:09.501Z"
     }
   ]
 }

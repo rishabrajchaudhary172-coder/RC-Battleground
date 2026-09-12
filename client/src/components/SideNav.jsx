@@ -93,48 +93,11 @@ export default function SideNav({ isOpen, onClose, onOpenAuthModal }) {
           
           {/* Main Navigation Links */}
           <div className="space-y-1">
-            <div className="px-3 pb-2 text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-400">
-              NAVIGATION MENU
-            </div>
-
-            {navLinks.map(({ to, label, icon: Icon, badge }) => {
-              const active = location.pathname === to;
-              return (
-                <button
-                  key={to}
-                  onClick={() => handleNav(to)}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-lg font-mono text-xs uppercase tracking-wider font-bold transition-all ${
-                    active 
-                      ? 'bg-white text-black font-extrabold shadow-md border border-white' 
-                      : isLight
-                        ? 'text-zinc-700 hover:bg-zinc-100 hover:text-black'
-                        : 'text-zinc-300 hover:bg-zinc-900 hover:text-white border border-transparent hover:border-zinc-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-black' : 'text-emerald-400'}`} />
-                    <span>{label}</span>
-                  </div>
-
-                  {badge && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-black uppercase tracking-wider ${
-                      badge === 'LIVE' ? 'bg-red-950 text-red-300 border border-red-800 animate-pulse' :
-                      badge === 'PRO' ? 'bg-amber-950 text-amber-300 border border-amber-800' :
-                      badge === 'HOT' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
-                      'bg-zinc-800 text-zinc-300'
-                    }`}>
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
             {/* Admin Control Link (If Admin User) */}
             {user && user.role === 'admin' && (
               <button
                 onClick={() => handleNav('/admin')}
-                className="w-full flex items-center justify-between px-3.5 py-3 rounded-lg font-mono text-xs uppercase tracking-wider font-bold bg-purple-950/60 text-purple-200 border border-purple-800 hover:bg-purple-900 transition-colors mt-2"
+                className="w-full flex items-center justify-between px-3.5 py-3 rounded-lg font-mono text-xs uppercase tracking-wider font-bold bg-purple-950/60 text-purple-200 border border-purple-800 hover:bg-purple-900 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="w-4 h-4 text-purple-400" />
