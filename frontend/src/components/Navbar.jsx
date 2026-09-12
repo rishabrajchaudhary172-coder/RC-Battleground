@@ -21,7 +21,8 @@ import {
   Layers,
   Calendar,
   Info,
-  Mail
+  Mail,
+  Grid3X3
 } from 'lucide-react';
 import SideNav from './SideNav';
 import logoImg from '../assets/logo_rc_battleground.png';
@@ -62,6 +63,17 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
     }
   };
 
+  const exploreLinks = [
+    { to: '/', label: 'Home Page', icon: Home },
+    { to: '/catalog', label: 'Vehicle Catalog', icon: Grid3X3, badge: 'HOT' },
+    { to: '/categories', label: 'Categories', icon: Layers },
+    { to: '/events', label: 'Race Events', icon: Calendar, badge: 'LIVE' },
+    { to: '/membership', label: 'Membership Plans', icon: Crown, badge: 'PRO' },
+    { to: '/rewards', label: 'Reward Points', icon: Award, badge: 'PTS' },
+    { to: '/about', label: 'About RC Battleground', icon: Info },
+    { to: '/contact', label: 'Contact Us', icon: Mail },
+  ];
+
   return (
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800 font-sans">
       <SideNav isOpen={sideNavOpen} onClose={() => setSideNavOpen(false)} onOpenAuthModal={onOpenAuthModal} />
@@ -92,8 +104,8 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
-          {/* Top-Left Hamburger Menu & Brand Logo */}
-          <div className="flex items-center space-x-4">
+          {/* Top-Left Hamburger Menu, Brand Logo & Explore Dropdown */}
+          <div className="flex items-center space-x-4 sm:space-x-6">
             <button
               onClick={() => setSideNavOpen(true)}
               className="p-2 text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors flex items-center gap-1.5 font-mono text-xs font-bold uppercase"
@@ -120,6 +132,55 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
                 </span>
               </div>
             </Link>
+
+            {/* Explore Pages Dropdown Menu */}
+            <div className="relative font-mono hidden md:block">
+              <button
+                onClick={() => setNavDropdownOpen(!navDropdownOpen)}
+                className="flex items-center space-x-2 bg-zinc-900/90 border border-zinc-800 hover:border-zinc-500 px-3 py-1.5 text-xs font-bold text-white rounded transition-colors shadow-sm"
+                title="Explore All Pages"
+              >
+                <span>EXPLORE PAGES</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ${navDropdownOpen ? 'rotate-180 text-white' : ''}`} />
+              </button>
+
+              {navDropdownOpen && (
+                <div className="absolute left-0 mt-2 w-64 bg-zinc-950 border border-zinc-800 shadow-2xl p-2 z-50 rounded-xl backdrop-blur-xl">
+                  <div className="text-[10px] font-mono text-zinc-500 px-3 py-1.5 font-bold uppercase tracking-wider border-b border-zinc-900 mb-1 flex items-center justify-between">
+                    <span>EXPLORE PAGES</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {exploreLinks.map((link) => {
+                      const IconComponent = link.icon;
+                      const isActive = location.pathname === link.to;
+                      return (
+                        <Link
+                          key={link.to}
+                          to={link.to}
+                          onClick={() => setNavDropdownOpen(false)}
+                          className={`flex items-center justify-between px-3 py-2 text-xs rounded-lg transition-all ${
+                            isActive
+                              ? 'bg-zinc-800 text-white font-bold border border-zinc-700'
+                              : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2.5">
+                            <IconComponent className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
+                            <span>{link.label}</span>
+                          </div>
+                          {link.badge && (
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-zinc-900 text-emerald-400 border border-zinc-800 rounded uppercase">
+                              {link.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
           </div>
 
@@ -250,6 +311,31 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
               className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2 text-white focus:outline-none"
             />
           </form>
+
+          <div className="space-y-1 py-2 border-t border-b border-zinc-900">
+            <div className="text-[10px] text-zinc-500 font-bold tracking-wider mb-2">EXPLORE PAGES</div>
+            {exploreLinks.map((link) => {
+              const IconComponent = link.icon;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between py-2 text-zinc-300 hover:text-white"
+                >
+                  <div className="flex items-center space-x-2">
+                    <IconComponent className="w-4 h-4 text-zinc-400" />
+                    <span>{link.label}</span>
+                  </div>
+                  {link.badge && (
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-900 text-emerald-400 border border-zinc-800 rounded">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
           {onReplayIntro && (
             <button
