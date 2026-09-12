@@ -37,8 +37,28 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [navDropdownOpen, setNavDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isVisible, setIsVisible] = useState(true);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hide header when scrolling down, reveal when scrolling up
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollPos = window.scrollY;
+      
+      if (currentScrollPos > 80 && currentScrollPos > prevScrollPos) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+
+      setPrevScrollPos(currentScrollPos);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [prevScrollPos]);
 
   useEffect(() => {
     fetch('/api/categories')
@@ -74,8 +94,12 @@ export default function Navbar({ onOpenAuthModal, onReplayIntro }) {
     { to: '/contact', label: 'Contact Us', icon: Mail },
   ];
 
+  const showNav = isVisible || sideNavOpen || mobileMenuOpen || userMenuOpen || navDropdownOpen;
+
   return (
-    <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800 font-sans">
+    <header className={`sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800 font-sans transition-transform duration-300 ease-in-out ${
+      showNav ? 'translate-y-0' : '-translate-y-full'
+    }`}>
       <SideNav isOpen={sideNavOpen} onClose={() => setSideNavOpen(false)} onOpenAuthModal={onOpenAuthModal} />
 
       {/* Top Banner Notice */}
