@@ -1,5 +1,5 @@
 {
-  "max_admin_limit": 5,
+  "max_admin_limit": 10,
   "users": [
     {
       "id": 1,
@@ -557,6 +557,15 @@
       "message": "Requesting arena booking for Sector 7 Dirt Arena on Sunday for 1/10 scale 4WD buggy practice session.",
       "status": "unread",
       "created_at": "2026-09-11T12:00:00.000Z"
+    }
+  ],
+  "site_settings": [
+    {
+      "key": "max_admin_limit",
+      "value": {
+        "limit": 10
+      },
+      "updated_at": "2026-09-12T07:31:20.636Z"
     }
   ]
 }

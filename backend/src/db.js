@@ -478,6 +478,46 @@ function executeMemoryQuery(text, params = []) {
     return { rows: cloneRows(memoryDb.site_content) };
   }
 
+  // 10.5 SELECT, INSERT, UPDATE site_settings (Max Admin Capacity Limit)
+  if (lowerSql.includes('site_settings')) {
+    if (lowerSql.includes('insert into site_settings') || lowerSql.includes('update site_settings')) {
+      let newLimit = 5;
+      for (const p of params) {
+        if (typeof p === 'number') newLimit = p;
+        else if (typeof p === 'string') {
+          try {
+            const parsed = JSON.parse(p);
+            if (parsed && parsed.limit) newLimit = parseInt(parsed.limit, 10);
+            else if (!isNaN(parseInt(p, 10))) newLimit = parseInt(p, 10);
+          } catch (e) {
+            if (!isNaN(parseInt(p, 10))) newLimit = parseInt(p, 10);
+          }
+        }
+      }
+
+      if (newLimit && newLimit > 0) {
+        memoryDb.max_admin_limit = newLimit;
+      }
+
+      if (!Array.isArray(memoryDb.site_settings)) memoryDb.site_settings = [];
+      const existingIdx = memoryDb.site_settings.findIndex(s => s.key === 'max_admin_limit');
+      const settingObj = { key: 'max_admin_limit', value: { limit: memoryDb.max_admin_limit || 5 }, updated_at: new Date() };
+
+      if (existingIdx >= 0) {
+        memoryDb.site_settings[existingIdx] = settingObj;
+      } else {
+        memoryDb.site_settings.push(settingObj);
+      }
+      saveMemoryDbToDisk();
+      return { rows: cloneRows([settingObj]) };
+    }
+
+    if (lowerSql.includes('from site_settings')) {
+      const limitVal = memoryDb.max_admin_limit || 5;
+      return { rows: [{ key: 'max_admin_limit', value: { limit: limitVal } }] };
+    }
+  }
+
   // 11. SELECT, INSERT, UPDATE, DELETE reviews_ratings
   if (lowerSql.includes('insert into reviews_ratings')) {
     const newRev = {

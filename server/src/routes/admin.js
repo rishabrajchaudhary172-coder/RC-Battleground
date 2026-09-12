@@ -267,11 +267,13 @@ router.get('/admins-list', authenticateToken, requireAdmin, async (req, res) => 
   try {
     const result = await db.query(`SELECT id, full_name, email, role, is_master_admin, created_at FROM users WHERE role = 'admin' ORDER BY id ASC`);
     
-    let maxAdminLimit = 5;
+    let maxAdminLimit = (db.memoryDb && db.memoryDb.max_admin_limit) ? db.memoryDb.max_admin_limit : 5;
     try {
       const limitRes = await db.query(`SELECT value FROM site_settings WHERE key = 'max_admin_limit'`);
       if (limitRes.rows.length > 0 && limitRes.rows[0].value) {
-        maxAdminLimit = parseInt(limitRes.rows[0].value.limit || limitRes.rows[0].value, 10) || 5;
+        const val = limitRes.rows[0].value;
+        const parsed = typeof val === 'string' ? JSON.parse(val) : val;
+        maxAdminLimit = parseInt(parsed.limit || parsed, 10) || maxAdminLimit;
       }
     } catch (e) {}
 
@@ -445,11 +447,24 @@ router.put('/update-admin-limit', authenticateToken, requireAdmin, async (req, r
       return res.status(403).json({ error: 'Only Master Admin (Second Lieutenant) can update the max admin limit' });
     }
 
-    await db.query(
-      `INSERT INTO site_settings (key, value) VALUES ('max_admin_limit', $1)
-       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
-      [JSON.stringify({ limit: newLimit })]
-    );
+    if (db.memoryDb) {
+      db.memoryDb.max_admin_limit = newLimit;
+      if (!Array.isArray(db.memoryDb.site_settings)) db.memoryDb.site_settings = [];
+      const existingIdx = db.memoryDb.site_settings.findIndex(s => s.key === 'max_admin_limit');
+      const settingObj = { key: 'max_admin_limit', value: { limit: newLimit }, updated_at: new Date() };
+      if (existingIdx >= 0) db.memoryDb.site_settings[existingIdx] = settingObj;
+      else db.memoryDb.site_settings.push(settingObj);
+
+      if (db.saveMemoryDbToDisk) db.saveMemoryDbToDisk();
+    }
+
+    try {
+      await db.query(
+        `INSERT INTO site_settings (key, value) VALUES ('max_admin_limit', $1)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+        [JSON.stringify({ limit: newLimit })]
+      );
+    } catch (e) {}
 
     res.json({
       message: `✅ Max admin account limit updated to ${newLimit}!`,
