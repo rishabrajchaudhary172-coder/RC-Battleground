@@ -10,7 +10,9 @@ export const AuthProvider = ({ children }) => {
   // Fetch current user from /api/auth/me if token exists
   const fetchCurrentUser = async (authToken) => {
     const activeToken = authToken || token;
-    if (!activeToken) {
+    if (!activeToken || activeToken.includes('demo_admin_token')) {
+      localStorage.removeItem('rc_token');
+      setToken('');
       setUser(null);
       setLoading(false);
       return;
@@ -29,13 +31,13 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.warn('Network error fetching profile, using active token state');
+      console.warn('Network error fetching profile');
     }
 
-    // Fallback profile from stored token for admin
-    if (activeToken.includes('admin') || activeToken === 'demo_admin_token') {
-      setUser({ id: 1, full_name: 'Second Lieutenant', email: 'admin@rcbattleground.com', role: 'admin', is_master_admin: true, phone: '+977 9768532969', address: 'Kaudhol, Chunikhel, Nepal' });
-    }
+    // Invalid session or token expired: clear storage and set signed out state
+    localStorage.removeItem('rc_token');
+    setToken('');
+    setUser(null);
     setLoading(false);
   };
 
