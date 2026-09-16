@@ -4,13 +4,20 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const pool = new Pool({
-  host: process.env.PGHOST || 'localhost',
-  port: process.env.PGPORT || 5432,
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD || 'postgres',
-  database: process.env.PGDATABASE || 'rc_battleground',
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+    }
+  : {
+      host: process.env.PGHOST || 'localhost',
+      port: process.env.PGPORT || 5432,
+      user: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD || 'postgres',
+      database: process.env.PGDATABASE || 'rc_battleground',
+    };
+
+const pool = new Pool(poolConfig);
 
 async function initDatabase() {
   const client = await pool.connect();

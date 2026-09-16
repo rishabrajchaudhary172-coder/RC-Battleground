@@ -6,14 +6,21 @@ require('dotenv').config();
 
 const DB_FILE_PATH = path.join(__dirname, '../data/persistent_db.json');
 
-const pool = new Pool({
-  host: process.env.PGHOST || 'localhost',
-  port: process.env.PGPORT || 5432,
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD || 'postgres',
-  database: process.env.PGDATABASE || 'rc_battleground',
-  connectionTimeoutMillis: 1500,
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+    }
+  : {
+      host: process.env.PGHOST || 'localhost',
+      port: process.env.PGPORT || 5432,
+      user: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD || 'postgres',
+      database: process.env.PGDATABASE || 'rc_battleground',
+      connectionTimeoutMillis: 3000,
+    };
+
+const pool = new Pool(poolConfig);
 
 let pgConnected = null;
 
