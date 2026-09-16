@@ -1,3 +1,11 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load env variables
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
+dotenv.config();
+
 const nodemailer = require('nodemailer');
 const db = require('../db');
 
@@ -122,10 +130,7 @@ async function sendMail({ to, subject, html, text, eventType = 'general', metada
       'X-Priority': '1 (Highest)',
       'X-MSMail-Priority': 'High',
       'Importance': 'High',
-      'X-Mailer': 'RC Battleground System',
-      'Auto-Submitted': 'auto-generated',
-      'X-Auto-Response-Suppress': 'All',
-      'Precedence': 'bulk',
+      'X-Entity-Ref-ID': `rcbg-otp-${Date.now()}`,
     },
   };
 
@@ -426,34 +431,37 @@ function buildVerificationEmail(user, code, token) {
   const appUrl = process.env.APP_URL || 'http://localhost:3000';
   const verifyUrl = `${appUrl}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`;
 
+  const plainText = `Welcome to RC Battleground, ${user.full_name || 'Driver'}!\n\nYour 6-digit verification code is: ${code}\n\nUse this code to complete your driver account verification. This code expires in 15 minutes.\n\nOr verify directly on your device: ${verifyUrl}\n\nIf you did not request this verification code, please ignore this message.`;
+
   const html = getHtmlWrapper(
-    `🔐 VERIFY YOUR PERSONAL EMAIL ACCOUNT`,
+    `ACCOUNT VERIFICATION CODE`,
     `
       <p>Welcome to <strong>RC Battleground</strong>, ${user.full_name || 'Driver'}!</p>
-      <p>To complete your account creation and verify ownership of this email address on your logged-in device, please use the 6-digit verification code below or click the direct verification button.</p>
+      <p>Please use the 6-digit verification code below to complete your account registration:</p>
 
-      <div style="margin:24px 0;text-align:center;background:#09090b;padding:20px;border:1px solid #27272a;">
-        <div style="font-size:11px;color:#a1a1aa;font-family:monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">YOUR 6-DIGIT VERIFICATION CODE</div>
-        <div style="font-size:36px;font-weight:900;letter-spacing:10px;color:#34d399;display:inline-block;font-family:monospace;margin:8px 0;">
+      <div style="margin:24px 0;text-align:center;background:#09090b;padding:24px;border:1px solid #27272a;border-radius:6px;">
+        <div style="font-size:11px;color:#a1a1aa;font-family:monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">YOUR VERIFICATION CODE</div>
+        <div style="font-size:38px;font-weight:900;letter-spacing:12px;color:#34d399;display:inline-block;font-family:monospace;margin:6px 0;">
           ${code}
         </div>
-        <div style="font-size:11px;color:#71717a;font-family:monospace;margin-top:4px;">(Expires in 15 minutes)</div>
+        <div style="font-size:11px;color:#71717a;font-family:monospace;margin-top:6px;">(Valid for 15 minutes)</div>
       </div>
 
       <div style="text-align:center;margin-top:24px;margin-bottom:12px;">
-        <a href="${verifyUrl}" style="background:#ffffff;color:#000000;padding:14px 28px;text-decoration:none;font-weight:900;font-family:monospace;font-size:13px;text-transform:uppercase;display:inline-block;border:1px solid #ffffff;letter-spacing:1px;">
+        <a href="${verifyUrl}" style="background:#ffffff;color:#000000;padding:14px 28px;text-decoration:none;font-weight:900;font-family:monospace;font-size:13px;text-transform:uppercase;display:inline-block;border:1px solid #ffffff;letter-spacing:1px;border-radius:4px;">
           VERIFY EMAIL ON THIS DEVICE →
         </a>
       </div>
       
       <p style="font-size:11px;color:#71717a;text-align:center;margin-top:16px;">
-        If you did not request this verification code, you can safely ignore this email.
+        If you did not request this verification code, please ignore this message.
       </p>
     `
   );
 
   return {
-    subject: `🔐 Verify Your Personal Email Account – RC Battleground (${code})`,
+    subject: `Your RC Battleground Verification Code: ${code}`,
+    text: plainText,
     html,
     eventType: 'email_verification'
   };

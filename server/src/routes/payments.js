@@ -6,14 +6,10 @@ const { getExchangeRate, usdToNpr, nprToUsd, DEFAULT_RATE } = require('../servic
 
 const router = express.Router();
 
-const GATEWAYS = ['esewa', 'khalti', 'mobile_banking', 'debit_card', 'credit_card'];
+const GATEWAYS = ['esewa'];
 
 const GATEWAY_LABELS = {
   esewa: 'eSewa',
-  khalti: 'Khalti',
-  mobile_banking: 'Mobile Banking',
-  debit_card: 'Debit Card',
-  credit_card: 'Credit Card',
 };
 
 // GET available payment gateways
@@ -105,8 +101,9 @@ router.get('/transactions', authenticateToken, requireAdmin, async (req, res) =>
   try {
     const { status, gateway } = req.query;
     let query = `
-      SELECT pt.*, u.full_name AS buyer_name, u.email AS buyer_email
+      SELECT pt.*, COALESCE(pt.payment_screenshot, o.payment_screenshot) AS payment_screenshot, o.order_number, u.full_name AS buyer_name, u.email AS buyer_email
       FROM payment_transactions pt
+      LEFT JOIN orders o ON pt.order_id = o.id
       LEFT JOIN users u ON pt.user_id = u.id
       WHERE 1=1
     `;

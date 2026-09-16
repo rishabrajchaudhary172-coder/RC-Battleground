@@ -155,8 +155,8 @@ export default function AboutUs() {
         {/* Right Column: Hero Generated Photography Banner */}
         <div className="lg:col-span-7 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative shadow-xl min-h-[380px] bg-zinc-950 group">
           <img
-            src="/rc_arena_vision_hero.jpg"
-            alt="Official RC Battleground Arena & Pit Headquarters"
+            src={aboutData?.metadata?.hero_image || "/rc_arena_vision_hero.jpg"}
+            alt={aboutData?.metadata?.hero_title || "Official RC Battleground Arena & Pit Headquarters"}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-95"
             onError={(e) => {
               e.target.src = 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=1200&q=80';
@@ -165,13 +165,13 @@ export default function AboutUs() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-6 sm:p-8 space-y-2">
             <div className="inline-flex items-center space-x-2 bg-red-600 text-white text-[11px] font-mono font-bold uppercase px-2.5 py-1 rounded w-max">
               <MapPin className="w-3.5 h-3.5" />
-              <span>OFFICIAL RC ARENA & TELEMETRY PIT HEADQUARTERS — NEPAL</span>
+              <span>{aboutData?.metadata?.hero_badge || "OFFICIAL RC ARENA & TELEMETRY PIT HEADQUARTERS — NEPAL"}</span>
             </div>
             <h3 className="text-white text-lg sm:text-xl font-bold font-sans">
-              Precision High-Speed Arena & Trackside Diagnostic Bay
+              {aboutData?.metadata?.hero_title || "Precision High-Speed Arena & Trackside Diagnostic Bay"}
             </h3>
             <p className="text-xs sm:text-sm text-zinc-300 font-sans max-w-xl">
-              Equipped with live lap timers, telemetry telemetry sensors, sub-millimeter gyro calibration, and 100% genuine replacement parts.
+              {aboutData?.metadata?.hero_description || "Equipped with live lap timers, telemetry telemetry sensors, sub-millimeter gyro calibration, and 100% genuine replacement parts."}
             </p>
           </div>
         </div>
@@ -197,67 +197,51 @@ export default function AboutUs() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          
-          {/* Gallery Card 1 */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-lg group hover:border-red-500/50 transition-all duration-300">
-            <div className="h-52 overflow-hidden relative">
-              <img
-                src="https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80"
-                alt="Off-Road Buggies"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <span className="absolute top-3 left-3 bg-black/80 text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded border border-zinc-700">
-                OFF-ROAD 4WD
-              </span>
+          {(aboutData?.metadata?.gallery || [
+            {
+              id: 1,
+              tag: 'OFF-ROAD 4WD',
+              title: 'APEX OFF-ROAD BUGGIES',
+              description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.',
+              image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+              id: 2,
+              tag: '1/10 RWD DRIFT',
+              title: 'TOKYO SPEC DRIFT CARS',
+              description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.',
+              image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+              id: 3,
+              tag: '6S BASHING TRUCKS',
+              title: 'TITAN CRUSHER BASHING TRUCKS',
+              description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.',
+              image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80'
+            }
+          ]).map((card, idx) => (
+            <div key={card.id || idx} className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-lg group hover:border-red-500/50 transition-all duration-300">
+              <div className="h-52 overflow-hidden relative">
+                <img
+                  src={card.image_url || 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80'}
+                  alt={card.title || 'Fleet Image'}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80';
+                  }}
+                />
+                <span className="absolute top-3 left-3 bg-black/80 text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded border border-zinc-700">
+                  {card.tag || 'CERTIFIED RC'}
+                </span>
+              </div>
+              <div className="p-5 space-y-2">
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white uppercase">{card.title}</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
+                  {card.description}
+                </p>
+              </div>
             </div>
-            <div className="p-5 space-y-2">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white uppercase">Apex Off-Road Buggies</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
-                65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.
-              </p>
-            </div>
-          </div>
-
-          {/* Gallery Card 2 */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-lg group hover:border-indigo-500/50 transition-all duration-300">
-            <div className="h-52 overflow-hidden relative">
-              <img
-                src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
-                alt="Drift Machines"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <span className="absolute top-3 left-3 bg-black/80 text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded border border-zinc-700">
-                1/10 RWD DRIFT
-              </span>
-            </div>
-            <div className="p-5 space-y-2">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white uppercase">Tokyo Spec Drift Cars</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
-                Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.
-              </p>
-            </div>
-          </div>
-
-          {/* Gallery Card 3 */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-lg group hover:border-blue-500/50 transition-all duration-300">
-            <div className="h-52 overflow-hidden relative">
-              <img
-                src="https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80"
-                alt="6S Monster Bashing Trucks"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <span className="absolute top-3 left-3 bg-black/80 text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded border border-zinc-700">
-                6S BASHING TRUCKS
-              </span>
-            </div>
-            <div className="p-5 space-y-2">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white uppercase">Titan Crusher Bashing Trucks</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-sans leading-relaxed">
-                Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.
-              </p>
-            </div>
-          </div>
-
+          ))}
         </div>
       </section>
 

@@ -16,8 +16,24 @@ export default function SideNav({ isOpen, onClose, onOpenAuthModal }) {
   const { currency, toggleCurrency } = useCurrency();
   const location = useLocation();
   const navigate = useNavigate();
+  const [customNavLinks, setCustomNavLinks] = React.useState(null);
 
-  const navLinks = [
+  React.useEffect(() => {
+    fetch('/api/content/explore_pages_nav')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.content?.metadata?.nav_links) {
+          setCustomNavLinks(data.content.metadata.nav_links);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const iconMap = {
+    Home, Grid3X3, Layers, Calendar, Crown, Award, Info, Mail
+  };
+
+  const defaultNavLinks = [
     { to: '/', label: 'Home Page', icon: Home, badge: null },
     { to: '/catalog', label: 'Vehicle Catalog', icon: Grid3X3, badge: 'HOT' },
     { to: '/categories', label: 'Categories', icon: Layers, badge: null },
@@ -27,6 +43,15 @@ export default function SideNav({ isOpen, onClose, onOpenAuthModal }) {
     { to: '/about', label: 'About RC Battleground', icon: Info, badge: null },
     { to: '/contact', label: 'Contact Us', icon: Mail, badge: null },
   ];
+
+  const navLinks = customNavLinks
+    ? customNavLinks.map((item) => ({
+        to: item.to,
+        label: item.label,
+        icon: iconMap[item.icon] || Home,
+        badge: item.badge || null,
+      }))
+    : defaultNavLinks;
 
   const handleNav = (to) => {
     onClose();

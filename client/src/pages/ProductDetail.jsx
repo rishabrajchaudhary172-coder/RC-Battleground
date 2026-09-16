@@ -224,7 +224,7 @@ export default function ProductDetail() {
 
             <div className="flex items-center space-x-4 pt-2">
               <PriceDisplay product={product} size="lg" />
-              <span className={`mono-badge ${product.stock > 0 ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-red-950 text-red-300 border-red-800'}`}>
+              <span className={`mono-badge ${product.stock > 0 ? 'bg-zinc-900 text-white border-zinc-700' : 'bg-red-950/80 text-red-400 border-red-800 font-bold tracking-widest animate-pulse'}`}>
                 {product.stock > 0 ? `${product.stock} IN STOCK` : 'OUT OF STOCK'}
               </span>
             </div>
@@ -255,20 +255,30 @@ export default function ProductDetail() {
               <div className="flex items-center border border-zinc-800 bg-zinc-950">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-2 text-zinc-400 hover:text-white"
+                  disabled={product.stock <= 0}
+                  className="px-3 py-2 text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="font-mono text-sm px-4 font-bold text-white">{quantity}</span>
+                <span className="font-mono text-sm px-4 font-bold text-white">{product.stock > 0 ? quantity : 0}</span>
                 <button
                   onClick={() => setQuantity(Math.min(product.stock || 1, quantity + 1))}
-                  className="px-3 py-2 text-zinc-400 hover:text-white"
+                  disabled={product.stock <= 0 || quantity >= product.stock}
+                  className="px-3 py-2 text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
 
-              {user && user.role === 'admin' ? (
+              {product.stock <= 0 ? (
+                <button
+                  disabled
+                  className="flex-1 bg-red-950/40 text-red-400 border border-red-800 py-3.5 text-xs font-bold font-mono flex items-center justify-center space-x-2 cursor-not-allowed opacity-90 uppercase"
+                >
+                  <ShoppingBag className="w-4 h-4 text-red-400" />
+                  <span>OUT OF STOCK</span>
+                </button>
+              ) : user && user.role === 'admin' ? (
                 <Link
                   to={`/admin/products?edit=${product.id}`}
                   className="flex-1 mono-btn-secondary py-3.5 text-xs font-bold flex items-center justify-center space-x-2 border-white text-white"
@@ -279,7 +289,6 @@ export default function ProductDetail() {
               ) : (
                 <button
                   onClick={() => addToCart(product, quantity)}
-                  disabled={product.stock <= 0}
                   className="flex-1 mono-btn-primary py-3.5 text-xs font-bold flex items-center justify-center space-x-2"
                 >
                   <ShoppingBag className="w-4 h-4" />

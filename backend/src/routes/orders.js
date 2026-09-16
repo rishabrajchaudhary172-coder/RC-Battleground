@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const db = require('../db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { getExchangeRate, usdToNpr } = require('../services/currency');
@@ -6,20 +8,20 @@ const { sendMail, sendAdminNotificationAsync, buildOrderEmail } = require('../se
 
 const router = express.Router();
 
-// POST Checkout / Create Order (Buyer)
+// POST Checkout / Create Order Booking (Buyer)
 router.post('/checkout', authenticateToken, async (req, res) => {
-  if (req.user && req.user.role === 'admin') {
-    return res.status(403).json({ error: 'Administrators cannot place order bookings. Please sign in with a buyer account.' });
-  }
   const client = await db.getClient();
   try {
-    const { items, shipping_address, payment_method, payment_gateway, points_to_redeem, currency } = req.body;
+    const { items, shipping_address, payment_method, payment_screenshot, payment_ref, points_to_redeem, currency } = req.body;
     
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item' });
     }
-    if (!shipping_address) {
+    if (!shipping_address || !shipping_address.trim()) {
       return res.status(400).json({ error: 'Shipping address is required' });
+    }
+    if (!payment_screenshot) {
+      return res.status(400).json({ error: 'Please upload your Fonepay QR payment screenshot as proof of payment to complete your booking.' });
     }
 
     await client.query('BEGIN');
@@ -90,6 +92,8 @@ router.post('/checkout', authenticateToken, async (req, res) => {
       validatedItems.push({
         product_id: product.id,
         name: product.name,
+        description: product.description || '',
+        image: product.images?.[0] || 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=400&q=80',
         quantity: qty,
         unit_price: unitPriceUsd,
         unit_price_usd: unitPriceUsd,
@@ -125,30 +129,53 @@ router.post('/checkout', authenticateToken, async (req, res) => {
 
     const pointsEarned = Math.floor(finalTotalUsd * pointsPerDollar * membershipMultiplier);
 
-    // 6. Generate order number
+    // 6. Generate unique order number and save static receipt screenshot file if base64
     const orderNumber = `RC-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const finalPaymentMethod = payment_method || 'QR Code (Fonepay / Sanima Bank)';
+
+    let finalScreenshotUrl = payment_screenshot;
+    if (payment_screenshot && payment_screenshot.startsWith('data:image/')) {
+      try {
+        const matches = payment_screenshot.match(/^data:image\/([a-zA-Z0-9+\-]+);base64,(.+)$/);
+        if (matches) {
+          const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+          const buffer = Buffer.from(matches[2], 'base64');
+          const fname = `receipt-${Date.now()}-${Math.floor(100000 + Math.random() * 900000)}.${ext}`;
+          const uploadsDir = path.join(__dirname, '../../uploads');
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+          }
+          fs.writeFileSync(path.join(uploadsDir, fname), buffer);
+          finalScreenshotUrl = `/uploads/${fname}`;
+        }
+      } catch (saveImgErr) {
+        console.warn('Screenshot file save fallback:', saveImgErr.message);
+      }
+    }
 
     // 7. Insert Order
     const orderRes = await client.query(
-      `INSERT INTO orders (user_id, order_number, total_amount, total_amount_npr, total_amount_usd, currency, discount_amount, points_redeemed, points_earned, status, shipping_address, payment_method)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11) RETURNING *`,
+      `INSERT INTO orders (user_id, order_number, total_amount, total_amount_npr, total_amount_usd, currency, discount_amount, points_redeemed, points_earned, status, shipping_address, payment_method, payment_screenshot, payment_ref)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13) RETURNING *`,
       [
         req.user.id,
         orderNumber,
         finalTotalUsd,
         finalTotalNpr,
         finalTotalUsd,
-        currency || 'USD',
+        currency || 'NPR',
         discountAmount,
         requestedPointsRedeem,
         pointsEarned,
         shipping_address.trim(),
-        payment_method || 'Credit Card'
+        finalPaymentMethod,
+        finalScreenshotUrl,
+        payment_ref || null
       ]
     );
     const order = orderRes.rows[0];
 
-    // 8. Insert Order Items & Deduct Product Stock
+    // 8. Insert Order Items & Deduct Product Stock Immediately
     for (const vItem of validatedItems) {
       await client.query(
         `INSERT INTO order_items (order_id, product_id, quantity, unit_price, unit_price_usd, unit_price_npr)
@@ -156,6 +183,7 @@ router.post('/checkout', authenticateToken, async (req, res) => {
         [order.id, vItem.product_id, vItem.quantity, vItem.unit_price, vItem.unit_price_usd, vItem.unit_price_npr]
       );
 
+      // Decrease stock count immediately upon order booking
       await client.query(
         `UPDATE products SET stock = stock - $1 WHERE id = $2`,
         [vItem.quantity, vItem.product_id]
@@ -183,27 +211,35 @@ router.post('/checkout', authenticateToken, async (req, res) => {
       console.warn('Points transaction logging fallback:', ptsTxErr.message);
     }
 
-    // 10. Record payment transaction if gateway provided
-    try {
-      const gatewayMap = {
-        'eSewa': 'esewa', 'Khalti': 'khalti', 'Mobile Banking': 'mobile_banking',
-        'Debit Card': 'debit_card', 'Credit Card': 'credit_card',
-      };
-      const gateway = payment_gateway || gatewayMap[payment_method] || 'credit_card';
-      const txnRef = `${gateway.toUpperCase()}-${Date.now()}`;
+    // 10. Commit Main Order Transaction Immediately
+    await client.query('COMMIT');
 
-      await client.query(
-        `INSERT INTO payment_transactions (user_id, order_id, gateway, amount_npr, amount_usd, currency, status, transaction_ref)
-         VALUES ($1, $2, $3, $4, $5, $6, 'completed', $7)`,
-        [req.user.id, order.id, gateway, finalTotalNpr, finalTotalUsd, currency || 'USD', txnRef]
+    // 11. Record Fonepay QR Payment Transaction
+    try {
+      const txnRef = payment_ref || `FONEPAY-${Date.now()}`;
+      await db.query(
+        `INSERT INTO payment_transactions (user_id, order_id, gateway, amount_npr, amount_usd, currency, status, transaction_ref, payment_screenshot, metadata)
+         VALUES ($1, $2, 'fonepay_qr', $3, $4, $5, 'pending_verification', $6, $7, $8)`,
+        [
+          req.user.id,
+          order.id,
+          finalTotalNpr,
+          finalTotalUsd,
+          'NPR',
+          txnRef,
+          payment_screenshot,
+          JSON.stringify({
+            payment_method: finalPaymentMethod,
+            payment_ref: payment_ref || null,
+            screenshot_attached: true
+          })
+        ]
       );
     } catch (payTxErr) {
       console.warn('Payment transaction logging fallback:', payTxErr.message);
     }
 
-    await client.query('COMMIT');
-
-    // Send admin & buyer email notifications asynchronously (non-blocking)
+    // 11. Send admin & buyer email notifications with payment screenshot info
     const buyerRes = await db.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const buyer = buyerRes.rows[0] || req.user;
     const emailPayload = buildOrderEmail(order, buyer, validatedItems);
@@ -211,10 +247,10 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     // Send Admin Notification
     sendAdminNotificationAsync({
       ...emailPayload,
-      metadata: { order_id: order.id, order_number: orderNumber }
+      subject: `⚡ New QR Payment Booking: Order #${orderNumber} (${buyer.full_name})`,
+      metadata: { order_id: order.id, order_number: orderNumber, payment_screenshot, payment_ref }
     });
 
-    // Send Buyer Confirmation Email (staggered slightly to avoid socket collision)
     if (buyer.email) {
       setTimeout(() => {
         sendMail({
@@ -226,9 +262,11 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     }
 
     res.status(201).json({
-      message: 'Order placed successfully',
+      message: 'Booking completed successfully! Your payment screenshot has been submitted for admin verification.',
       order: {
         ...order,
+        payment_screenshot,
+        payment_ref,
         items: validatedItems
       }
     });
@@ -289,8 +327,12 @@ router.get('/all', authenticateToken, requireAdmin, async (req, res) => {
             'item_id', oi.id,
             'product_id', oi.product_id,
             'name', p.name,
+            'description', p.description,
+            'image', p.images[1],
             'quantity', oi.quantity,
-            'unit_price', oi.unit_price
+            'unit_price', oi.unit_price,
+            'unit_price_usd', oi.unit_price_usd,
+            'unit_price_npr', oi.unit_price_npr
           )
         ) AS items
       FROM orders o

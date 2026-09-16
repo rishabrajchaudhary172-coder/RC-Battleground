@@ -61,6 +61,7 @@ export default function AuthModal({ isOpen, onClose }) {
         const res = await register(payload);
         if (res && res.requires_verification) {
           setVerificationEmail(res.email || formData.email);
+          if (res.otp_code) setOtpCode(res.otp_code);
           setVerificationMsg(res.message || 'Account created! Please check your email for the 6-digit verification code.');
           setStep('verify');
           setLoading(false);

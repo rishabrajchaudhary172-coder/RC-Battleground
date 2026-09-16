@@ -20,6 +20,8 @@ import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import Events from './pages/Events';
 import VerifyEmail from './pages/VerifyEmail';
+import EsewaPaymentSuccess from './pages/EsewaPaymentSuccess';
+import EsewaPaymentFailure from './pages/EsewaPaymentFailure';
 
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './components/AdminLayout';
@@ -96,11 +98,21 @@ export default function App() {
                   <Route path="/membership" element={<MembershipPlans />} />
                   <Route path="/rewards" element={<RewardPoints />} />
                   <Route path="/checkout" element={<CartCheckout />} />
-                  <Route path="/profile" element={<BuyerProfile />} />
+                  <Route path="/profile" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/buyer/profile" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/buyer/dashboard" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/dashboard" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/buyer" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/account" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/orders" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/my-orders" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
+                  <Route path="/bookings" element={<BuyerProfile onOpenAuthModal={() => setAuthModalOpen(true)} />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/about" element={<AboutUs />} />
                   <Route path="/contact" element={<ContactUs />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="/payment/esewa/success" element={<EsewaPaymentSuccess />} />
+                  <Route path="/payment/esewa/failure" element={<EsewaPaymentFailure />} />
                 </Routes>
               </div>
               <Footer />

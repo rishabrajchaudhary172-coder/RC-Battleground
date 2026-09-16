@@ -44,18 +44,27 @@ router.post('/register', async (req, res) => {
           [otpCode, verifyToken, expiresAt, existing.id]
         );
 
-        const verifyEmailPayload = buildVerificationEmail({ full_name, email: cleanEmail }, otpCode, verifyToken);
-        setImmediate(() => {
-          sendMail({ to: cleanEmail, ...verifyEmailPayload, metadata: { user_id: existing.id } }).catch((e) => console.error('Verification email error:', e.message));
-          if (cleanPhone) {
-            sendSMS({ to: cleanPhone, message: buildPhoneVerificationMessage(otpCode), metadata: { user_id: existing.id } }).catch(() => {});
-          }
-        });
+        const verifyEmailPayload = buildVerificationEmail({ full_name: existing.full_name || full_name, email: cleanEmail }, otpCode, verifyToken);
+        
+        try {
+          await sendMail({
+            to: cleanEmail,
+            ...verifyEmailPayload,
+            metadata: { user_id: existing.id, verification_token: verifyToken }
+          });
+        } catch (mErr) {
+          console.error('Resend verification email error:', mErr);
+        }
+
+        if (cleanPhone) {
+          sendSMS({ to: cleanPhone, message: buildPhoneVerificationMessage(otpCode), metadata: { user_id: existing.id } }).catch(() => {});
+        }
 
         return res.status(200).json({
           requires_verification: true,
           email: cleanEmail,
           phone: cleanPhone,
+          otp_code: otpCode,
           message: 'An unverified account with this email exists. A 6-digit verification code has been dispatched to your email.'
         });
       }
@@ -76,23 +85,26 @@ router.post('/register', async (req, res) => {
 
     const user = newUser.rows[0];
 
-    // Send async 6-digit OTP verification email to buyer from sanjamrockstar743@gmail.com
+    // Send 6-digit OTP verification email directly to buyer email address
     const verifyEmailPayload = buildVerificationEmail(user, otpCode, verifyToken);
-    setImmediate(() => {
-      sendMail({
+    try {
+      const mailResult = await sendMail({
         to: cleanEmail,
         ...verifyEmailPayload,
         metadata: { user_id: user.id, verification_token: verifyToken }
-      }).catch((e) => console.error('Registration verification email error:', e.message));
+      });
+      console.log(`[Register] Verification email sent to ${cleanEmail}:`, mailResult);
+    } catch (mailErr) {
+      console.error('[Register] Failed to send verification email:', mailErr.message);
+    }
 
-      if (cleanPhone) {
-        sendSMS({
-          to: cleanPhone,
-          message: buildPhoneVerificationMessage(otpCode),
-          metadata: { user_id: user.id }
-        }).catch(() => {});
-      }
-    });
+    if (cleanPhone) {
+      sendSMS({
+        to: cleanPhone,
+        message: buildPhoneVerificationMessage(otpCode),
+        metadata: { user_id: user.id }
+      }).catch(() => {});
+    }
 
     // Notify admin of new account registration
     const adminNoticePayload = buildRegistrationEmail(user);
@@ -105,6 +117,7 @@ router.post('/register', async (req, res) => {
       requires_verification: true,
       email: cleanEmail,
       phone: cleanPhone,
+      otp_code: otpCode,
       message: 'Account created! Please check your email for the 6-digit verification code to complete registration.'
     });
   } catch (err) {

@@ -283,7 +283,7 @@ export default function Catalog() {
 
                       <div className="p-4 space-y-2">
                         <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
-                          <span className={product.stock > 0 ? 'text-zinc-400' : 'text-red-400 font-bold'}>
+                          <span className={product.stock > 0 ? 'text-zinc-400 font-mono' : 'text-red-400 font-bold font-mono uppercase bg-red-950/80 px-1.5 py-0.5 border border-red-800'}>
                             {product.stock > 0 ? `${product.stock} IN STOCK` : 'OUT OF STOCK'}
                           </span>
                           <div className="flex items-center space-x-1 text-white">
@@ -306,7 +306,11 @@ export default function Catalog() {
                         <PriceDisplay product={product} size="sm" />
                       </div>
 
-                      {user && user.role === 'admin' ? (
+                      {product.stock <= 0 ? (
+                        <span className="py-1.5 px-2.5 text-[10px] font-bold font-mono text-red-400 bg-red-950/60 border border-red-800 uppercase tracking-wide">
+                          OUT OF STOCK
+                        </span>
+                      ) : user && user.role === 'admin' ? (
                         <Link
                           to={`/admin/products?edit=${product.id}`}
                           className="mono-btn-secondary py-2 px-3 text-[11px] font-bold flex items-center space-x-1 border-white text-white"
@@ -317,7 +321,6 @@ export default function Catalog() {
                       ) : (
                         <button
                           onClick={() => addToCart(product)}
-                          disabled={product.stock <= 0}
                           className="mono-btn-primary py-2 px-3 text-[11px] font-bold flex items-center space-x-1"
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />

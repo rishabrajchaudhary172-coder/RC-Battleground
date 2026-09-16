@@ -136,9 +136,17 @@ function loadMemoryDbFromDisk() {
     if (fs.existsSync(DB_FILE_PATH)) {
       const rawData = fs.readFileSync(DB_FILE_PATH, 'utf8');
       const loaded = JSON.parse(rawData);
-      if (loaded && Array.isArray(loaded.users)) {
-        Object.assign(memoryDb, loaded);
-        console.log(`📦 Database loaded ${memoryDb.users.length} persistent user accounts from disk storage!`);
+      if (loaded && typeof loaded === 'object') {
+        for (const key of Object.keys(loaded)) {
+          if (Array.isArray(loaded[key]) && loaded[key].length > 0) {
+            memoryDb[key] = loaded[key];
+          } else if (typeof loaded[key] === 'object' && loaded[key] !== null && !Array.isArray(loaded[key])) {
+            memoryDb[key] = { ...memoryDb[key], ...loaded[key] };
+          } else if (loaded[key] !== undefined && loaded[key] !== null) {
+            memoryDb[key] = loaded[key];
+          }
+        }
+        console.log(`📦 Database loaded persistent storage state from disk!`);
       }
     }
   } catch (err) {
@@ -275,23 +283,48 @@ function executeMemoryQuery(text, params = []) {
     return { rows: [{ id: userId }] };
   }
 
+  // Transaction control handlers
+  if (lowerSql === 'begin' || lowerSql === 'commit' || lowerSql === 'rollback') {
+    return { rows: [] };
+  }
+
   // 4. SELECT, INSERT, UPDATE, DELETE products & Stock Management
   if (lowerSql.includes('stock = stock -')) {
-    const qtyToDeduct = parseInt(params[0], 10) || 1;
-    const prodId = parseInt(params[1], 10);
+    let qtyToDeduct = parseInt(params[0], 10);
+    let prodId = parseInt(params[1], 10);
+
+    if (isNaN(qtyToDeduct) || isNaN(prodId)) {
+      const match = sql.match(/stock\s*=\s*stock\s*-\s*(\d+).*?where\s+(?:p\.)?id\s*=\s*(\d+)/i);
+      if (match) {
+        qtyToDeduct = parseInt(match[1], 10);
+        prodId = parseInt(match[2], 10);
+      }
+    }
+
     const prod = memoryDb.products.find(p => String(p.id) === String(prodId));
     if (prod) {
-      prod.stock = Math.max(0, prod.stock - qtyToDeduct);
+      prod.stock = Math.max(0, prod.stock - (qtyToDeduct || 1));
+      saveMemoryDbToDisk();
     }
     return { rows: cloneRows([prod || { id: prodId }]) };
   }
 
   if (lowerSql.includes('stock = stock +')) {
-    const qtyToAdd = parseInt(params[0], 10) || 1;
-    const prodId = parseInt(params[1], 10);
+    let qtyToAdd = parseInt(params[0], 10);
+    let prodId = parseInt(params[1], 10);
+
+    if (isNaN(qtyToAdd) || isNaN(prodId)) {
+      const match = sql.match(/stock\s*=\s*stock\s*\+\s*(\d+).*?where\s+(?:p\.)?id\s*=\s*(\d+)/i);
+      if (match) {
+        qtyToAdd = parseInt(match[1], 10);
+        prodId = parseInt(match[2], 10);
+      }
+    }
+
     const prod = memoryDb.products.find(p => String(p.id) === String(prodId));
     if (prod) {
-      prod.stock = prod.stock + qtyToAdd;
+      prod.stock = prod.stock + (qtyToAdd || 1);
+      saveMemoryDbToDisk();
     }
     return { rows: cloneRows([prod || { id: prodId }]) };
   }
@@ -323,13 +356,23 @@ function executeMemoryQuery(text, params = []) {
       created_at: new Date()
     };
     memoryDb.products.unshift(newProd);
+    saveMemoryDbToDisk();
     return { rows: cloneRows([newProd]) };
   }
 
   if ((lowerSql.includes('update products set') || lowerSql.includes('update products')) && !lowerSql.includes('stock = stock')) {
-    const prodId = parseInt(params[params.length - 1], 10);
+    let prodId = parseInt(params[params.length - 1], 10);
+    if (isNaN(prodId)) {
+      const match = sql.match(/where\s+(?:p\.)?id\s*=\s*(\d+)/i);
+      if (match) prodId = parseInt(match[1], 10);
+    }
     const prod = memoryDb.products.find(p => p.id === prodId);
     if (prod) {
+      // Check if updating stock directly (e.g. UPDATE products SET stock = 6 WHERE id = 7)
+      const stockMatch = sql.match(/stock\s*=\s*(\d+)/i);
+      if (stockMatch && params.length === 0) {
+        prod.stock = parseInt(stockMatch[1], 10);
+      }
       if (params[0] !== null && params[0] !== undefined) {
         prod.category_id = parseInt(params[0], 10);
         const cat = memoryDb.categories.find(c => c.id === prod.category_id);
@@ -353,30 +396,63 @@ function executeMemoryQuery(text, params = []) {
       if (params[8]) prod.seller_name = params[8].toString();
       if (params[9] !== undefined && params[9] !== null) prod.is_featured = Boolean(params[9]);
       if (params[10]) prod.specs = params[10];
+      saveMemoryDbToDisk();
     }
     return { rows: cloneRows([prod || { id: prodId }]) };
   }
 
   if (lowerSql.includes('delete from products')) {
-    const prodId = parseInt(params[0], 10);
+    let prodId = parseInt(params[0], 10);
+    if (isNaN(prodId)) {
+      const match = sql.match(/where\s+(?:p\.)?id\s*=\s*(\d+)/i);
+      if (match) prodId = parseInt(match[1], 10);
+    }
     memoryDb.products = memoryDb.products.filter(p => p.id !== prodId);
+    saveMemoryDbToDisk();
     return { rows: cloneRows([{ id: prodId }]) };
   }
 
   if (lowerSql.includes('from products')) {
     let prods = cloneRows(memoryDb.products);
-    if (lowerSql.includes('where p.id = $1') || lowerSql.includes('where p.slug = $1') || lowerSql.includes('where id = $1')) {
-      const val = params[0];
-      const product = memoryDb.products.find(p => p.id === parseInt(val, 10) || p.slug === val);
-      return { rows: product ? cloneRows([product]) : [] };
+    
+    // 1. If filtering by product ID: WHERE id = $1 or WHERE p.id = $1 or WHERE id = 7
+    if (lowerSql.includes('where p.id =') || lowerSql.includes('where id =')) {
+      let targetId = params[0];
+      if (targetId === undefined || isNaN(parseInt(targetId, 10))) {
+        const match = sql.match(/where\s+(?:p\.)?id\s*=\s*(\d+)/i);
+        if (match) targetId = match[1];
+      }
+      if (targetId !== undefined && targetId !== null) {
+        const prodIdNum = parseInt(targetId, 10);
+        const product = memoryDb.products.find(p => p.id === prodIdNum);
+        return { rows: product ? cloneRows([product]) : [] };
+      }
     }
-    if (lowerSql.includes('where c.slug = $1')) {
+
+    // 2. If filtering by product slug: WHERE p.slug = $1 or WHERE slug = $1
+    if (lowerSql.includes('where p.slug =') || lowerSql.includes('where slug =')) {
+      let targetSlug = params[0];
+      if (!targetSlug) {
+        const match = sql.match(/where\s+(?:p\.)?slug\s*=\s*'([^']+)'/i);
+        if (match) targetSlug = match[1];
+      }
+      if (targetSlug) {
+        const product = memoryDb.products.find(p => p.slug === targetSlug);
+        return { rows: product ? cloneRows([product]) : [] };
+      }
+    }
+
+    // 3. If filtering by category slug: WHERE c.slug = $1 or category_slug
+    if (lowerSql.includes('where c.slug =') || lowerSql.includes('category_slug')) {
       const catSlug = params[0];
-      prods = prods.filter(p => p.category_slug === catSlug);
+      if (catSlug) prods = prods.filter(p => p.category_slug === catSlug);
     }
+
+    // 4. Featured products
     if (lowerSql.includes('where p.is_featured = true') || lowerSql.includes('is_featured = true')) {
       prods = prods.filter(p => p.is_featured);
     }
+
     return { rows: prods };
   }
 
@@ -617,15 +693,21 @@ function executeMemoryQuery(text, params = []) {
           return {
             item_id: oi.id,
             product_id: oi.product_id,
-            name: product?.name || 'RC Vehicle/Part',
-            image: product?.images?.[0] || '',
+            name: product?.name || oi.name || 'RC Vehicle/Part',
+            description: product?.description || oi.description || '',
+            image: product?.images?.[0] || oi.image || 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=400&q=80',
             quantity: oi.quantity,
-            unit_price: oi.unit_price
+            unit_price: oi.unit_price,
+            unit_price_usd: oi.unit_price_usd || oi.unit_price,
+            unit_price_npr: oi.unit_price_npr || (parseFloat(oi.unit_price) * 133.50)
           };
         });
 
       return {
         ...ord,
+        payment_screenshot: ord.payment_screenshot || null,
+        payment_ref: ord.payment_ref || null,
+        payment_method: ord.payment_method || 'QR Code (Fonepay)',
         buyer_name: buyer?.full_name || 'Driver Account',
         buyer_email: buyer?.email || '',
         items
@@ -715,12 +797,15 @@ function executeMemoryQuery(text, params = []) {
       discount_amount: params[6],
       points_redeemed: params[7],
       points_earned: params[8],
-      status: 'pending',
-      shipping_address: params[9],
-      payment_method: params[10],
+      status: params[9] || 'pending',
+      shipping_address: params[10] || params[9],
+      payment_method: params[11] || 'QR Code (Fonepay / Sanima Bank)',
+      payment_screenshot: params[12] || null,
+      payment_ref: params[13] || null,
       created_at: new Date()
     };
     memoryDb.orders.unshift(newOrder);
+    saveMemoryDbToDisk();
     return { rows: cloneRows([newOrder]) };
   }
 
@@ -748,21 +833,53 @@ function executeMemoryQuery(text, params = []) {
     return { rows: cloneRows([ord || { id: orderId, status: newStatus }]) };
   }
 
-  // 13.6 INSERT INTO payment_transactions
+  // 13.6 SELECT, INSERT, UPDATE payment_transactions
+  if (!Array.isArray(memoryDb.payment_transactions)) memoryDb.payment_transactions = [];
+
+  if (lowerSql.includes('from payment_transactions')) {
+    let txns = memoryDb.payment_transactions;
+    if (lowerSql.includes('where transaction_uuid = $1')) {
+      const uuid = params[0];
+      txns = txns.filter(t => t.transaction_uuid === uuid);
+    }
+    return { rows: cloneRows(txns) };
+  }
+
   if (lowerSql.includes('insert into payment_transactions')) {
     const newTx = {
       id: Date.now(),
       user_id: params[0],
       order_id: params[1],
-      gateway: params[2],
-      amount_npr: params[3],
-      amount_usd: params[4],
-      currency: params[5],
-      status: 'completed',
-      transaction_ref: params[6] || `TXN-${Date.now()}`,
+      gateway: params[2] || 'esewa',
+      transaction_uuid: params[2] === 'esewa' ? params[3] : (params[6] || `ORD-${Date.now()}`),
+      amount_npr: params[3] || params[4] || 0,
+      amount_usd: params[4] || params[5] || 0,
+      currency: params[5] || 'NPR',
+      status: params[6] || 'pending',
+      transaction_ref: params[6] || params[7] || `TXN-${Date.now()}`,
+      ref_id: null,
+      raw_response: {},
+      verified: false,
       created_at: new Date()
     };
+    memoryDb.payment_transactions.unshift(newTx);
+    saveMemoryDbToDisk();
     return { rows: cloneRows([newTx]) };
+  }
+
+  if (lowerSql.includes('update payment_transactions')) {
+    const targetUuid = params[params.length - 1];
+    const tx = memoryDb.payment_transactions.find(t => t.transaction_uuid === targetUuid || String(t.id) === String(targetUuid));
+    if (tx) {
+      if (lowerSql.includes('status = \'completed\'') || lowerSql.includes('status = $1')) tx.status = params[0] || 'completed';
+      if (lowerSql.includes('ref_id =')) tx.ref_id = params[0];
+      if (lowerSql.includes('verified = true')) tx.verified = true;
+      if (lowerSql.includes('raw_response =')) {
+        try { tx.raw_response = JSON.parse(params[1] || params[0]); } catch (e) {}
+      }
+    }
+    saveMemoryDbToDisk();
+    return { rows: cloneRows([tx || { id: 1 }]) };
   }
 
   // 14. Generic INSERT or UPDATE or DELETE
@@ -965,6 +1082,9 @@ async function ensureSchemaColumns(clientOrPool) {
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_amount_npr NUMERIC(12, 2) NOT NULL DEFAULT 0;
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_amount_usd NUMERIC(12, 2) NOT NULL DEFAULT 0;
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'USD';
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS transaction_uuid VARCHAR(120);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_screenshot TEXT;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_ref VARCHAR(120);
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit_price_npr NUMERIC(12, 2) NOT NULL DEFAULT 0;
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit_price_usd NUMERIC(12, 2) NOT NULL DEFAULT 0;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS price_npr NUMERIC(12, 2) NOT NULL DEFAULT 0;
@@ -973,6 +1093,12 @@ async function ensureSchemaColumns(clientOrPool) {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(10);
       ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(100);
       ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE payment_transactions ADD COLUMN IF NOT EXISTS transaction_uuid VARCHAR(120);
+      ALTER TABLE payment_transactions ADD COLUMN IF NOT EXISTS ref_id VARCHAR(120);
+      ALTER TABLE payment_transactions ADD COLUMN IF NOT EXISTS payment_screenshot TEXT;
+      ALTER TABLE payment_transactions ADD COLUMN IF NOT EXISTS raw_response JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE payment_transactions ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false;
+      ALTER TABLE payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_gateway_check;
     `);
     schemaEnsured = true;
   } catch (err) {

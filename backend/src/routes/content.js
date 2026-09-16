@@ -48,6 +48,68 @@ router.get('/:key', async (req, res) => {
       };
     }
 
+    if (!contentItem && key === 'explore_pages_nav') {
+      contentItem = {
+        key: 'explore_pages_nav',
+        title: 'Explore Pages Navigation',
+        content: 'Admin-customized nav links and display labels for the Explore Pages dropdown.',
+        metadata: {
+          nav_links: [
+            { id: 'home', to: '/', label: 'Home Page', icon: 'Home', badge: null },
+            { id: 'catalog', to: '/catalog', label: 'Vehicle Catalog', icon: 'Grid3X3', badge: 'HOT' },
+            { id: 'categories', to: '/categories', label: 'Categories', icon: 'Layers', badge: null },
+            { id: 'events', to: '/events', label: 'Race Events', icon: 'Calendar', badge: 'LIVE' },
+            { id: 'membership', to: '/membership', label: 'Membership Plans', icon: 'Crown', badge: 'PRO' },
+            { id: 'rewards', to: '/rewards', label: 'Reward Points', icon: 'Award', badge: 'PTS' },
+            { id: 'about', to: '/about', label: 'About RC Battleground', icon: 'Info', badge: null },
+            { id: 'contact', to: '/contact', label: 'Contact Us', icon: 'Mail', badge: null },
+          ]
+        }
+      };
+    }
+
+    if (!contentItem && key === 'about_us') {
+      contentItem = {
+        key: 'about_us',
+        title: 'ENGINEERED FOR THE DISCERNING CONTROLLER',
+        content: 'RC Battleground was founded by motorsport veterans and RC engineering enthusiasts who demanded zero compromises in speed, durability, and chassis craftsmanship.\n\nFrom high-voltage 6S brushless bashing trucks to sub-millimeter gyro drift chassis, we curate only elite competition-grade remote control vehicles, telemetry sensors, and authentic replacement parts in Nepal.',
+        metadata: {
+          stats: [
+            { value: '12,500+', label: 'RC VEHICLES DELIVERED' },
+            { value: '450+', label: 'TRACK RECORDS BROKEN' },
+            { value: '8,200+', label: 'ACTIVE DRIVERS' }
+          ],
+          hero_image: '/rc_arena_vision_hero.jpg',
+          hero_badge: 'OFFICIAL RC ARENA & TELEMETRY PIT HEADQUARTERS — NEPAL',
+          hero_title: 'Precision High-Speed Arena & Trackside Diagnostic Bay',
+          hero_description: 'Equipped with live lap timers, telemetry telemetry sensors, sub-millimeter gyro calibration, and 100% genuine replacement parts.',
+          gallery: [
+            {
+              id: 1,
+              tag: 'OFF-ROAD 4WD',
+              title: 'APEX OFF-ROAD BUGGIES',
+              description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.',
+              image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+              id: 2,
+              tag: '1/10 RWD DRIFT',
+              title: 'TOKYO SPEC DRIFT CARS',
+              description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.',
+              image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+              id: 3,
+              tag: '6S BASHING TRUCKS',
+              title: 'TITAN CRUSHER BASHING TRUCKS',
+              description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.',
+              image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80'
+            }
+          ]
+        }
+      };
+    }
+
     if (!contentItem) {
       return res.status(404).json({ error: `Content key '${key}' not found` });
     }

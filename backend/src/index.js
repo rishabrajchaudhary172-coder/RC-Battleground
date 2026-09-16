@@ -19,6 +19,7 @@ const adminRoutes = require('./routes/admin');
 const contentRoutes = require('./routes/content');
 const eventRoutes = require('./routes/events');
 const paymentRoutes = require('./routes/payments');
+const esewaRoutes = require('./routes/esewa');
 const settingsRoutes = require('./routes/settings');
 const uploadRoutes = require('./routes/upload');
 
@@ -43,6 +44,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/payment/esewa', esewaRoutes);
+app.use('/api/payment/esewa', esewaRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
 

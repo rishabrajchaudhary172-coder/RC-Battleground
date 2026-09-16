@@ -151,6 +151,7 @@ CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     order_number VARCHAR(40) UNIQUE NOT NULL,
+    transaction_uuid VARCHAR(120),
     total_amount NUMERIC(12, 2) NOT NULL CHECK (total_amount >= 0),
     total_amount_npr NUMERIC(12, 2) NOT NULL DEFAULT 0,
     total_amount_usd NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -158,9 +159,9 @@ CREATE TABLE orders (
     discount_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     points_redeemed INT NOT NULL DEFAULT 0,
     points_earned INT NOT NULL DEFAULT 0,
-    status VARCHAR(30) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'shipped', 'delivered', 'cancelled')),
+    status VARCHAR(30) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'shipped', 'delivered', 'cancelled', 'ambiguous', 'failed')),
     shipping_address TEXT NOT NULL,
-    payment_method VARCHAR(50) DEFAULT 'Credit Card',
+    payment_method VARCHAR(50) DEFAULT 'eSewa',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -181,12 +182,16 @@ CREATE TABLE payment_transactions (
     user_id INT REFERENCES users(id) ON DELETE SET NULL,
     order_id INT REFERENCES orders(id) ON DELETE SET NULL,
     membership_purchase_id INT REFERENCES membership_purchases(id) ON DELETE SET NULL,
-    gateway VARCHAR(50) NOT NULL CHECK (gateway IN ('esewa', 'khalti', 'mobile_banking', 'debit_card', 'credit_card')),
+    gateway VARCHAR(50) NOT NULL DEFAULT 'esewa' CHECK (gateway IN ('esewa')),
+    transaction_uuid VARCHAR(120),
+    ref_id VARCHAR(120),
     amount_npr NUMERIC(12, 2) NOT NULL,
     amount_usd NUMERIC(12, 2) NOT NULL,
     currency VARCHAR(3) NOT NULL DEFAULT 'USD',
-    status VARCHAR(30) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
     transaction_ref VARCHAR(100),
+    raw_response JSONB DEFAULT '{}'::jsonb,
+    verified BOOLEAN DEFAULT false,
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

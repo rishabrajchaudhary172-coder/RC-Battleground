@@ -11,6 +11,17 @@ const DEFAULT_SLIDES = [
   { id: 5, title: 'RACE EVENTS 2026', description: 'Compete at premier RC racing events across Nepal.', image_url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1400&q=80', cta_text: 'VIEW EVENTS', cta_link: '/events', order: 5 },
 ];
 
+const DEFAULT_NAV_LINKS = [
+  { id: 'home', to: '/', label: 'Home Page', icon: 'Home', badge: '' },
+  { id: 'catalog', to: '/catalog', label: 'Vehicle Catalog', icon: 'Grid3X3', badge: 'HOT' },
+  { id: 'categories', to: '/categories', label: 'Categories', icon: 'Layers', badge: '' },
+  { id: 'events', to: '/events', label: 'Race Events', icon: 'Calendar', badge: 'LIVE' },
+  { id: 'membership', to: '/membership', label: 'Membership Plans', icon: 'Crown', badge: 'PRO' },
+  { id: 'rewards', to: '/rewards', label: 'Reward Points', icon: 'Award', badge: 'PTS' },
+  { id: 'about', to: '/about', label: 'About RC Battleground', icon: 'Info', badge: '' },
+  { id: 'contact', to: '/contact', label: 'Contact Us', icon: 'Mail', badge: '' },
+];
+
 export default function AdminContent() {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('pit_crew_inquiries');
@@ -25,6 +36,7 @@ export default function AdminContent() {
   const [content, setContent] = useState('');
   const [metadata, setMetadata] = useState({});
   const [slides, setSlides] = useState(DEFAULT_SLIDES);
+  const [navLinks, setNavLinks] = useState(DEFAULT_NAV_LINKS);
 
   const fetchInquiries = async () => {
     try {
@@ -63,12 +75,15 @@ export default function AdminContent() {
       setMetadata(meta);
       if (tabKey === 'home_slider') {
         setSlides(meta.slides && meta.slides.length > 0 ? meta.slides : DEFAULT_SLIDES);
+      } else if (tabKey === 'explore_pages_nav') {
+        setNavLinks(meta.nav_links && meta.nav_links.length > 0 ? meta.nav_links : DEFAULT_NAV_LINKS);
       }
     } else {
-      setTitle(tabKey === 'home_slider' ? 'RC Battleground Hero Carousel' : '');
-      setContent(tabKey === 'home_slider' ? 'Admin-managed homepage slider with 5+ promotional slides.' : '');
+      setTitle(tabKey === 'home_slider' ? 'RC Battleground Hero Carousel' : tabKey === 'explore_pages_nav' ? 'Explore Pages Navigation' : '');
+      setContent(tabKey === 'home_slider' ? 'Admin-managed homepage slider with 5+ promotional slides.' : tabKey === 'explore_pages_nav' ? 'Custom navigation labels for Explore Pages menu.' : '');
       setMetadata({});
       if (tabKey === 'home_slider') setSlides(DEFAULT_SLIDES);
+      if (tabKey === 'explore_pages_nav') setNavLinks(DEFAULT_NAV_LINKS);
     }
   };
 
@@ -185,7 +200,11 @@ export default function AdminContent() {
     setSaving(true);
     setMsg('');
 
-    const payloadMetadata = activeTab === 'home_slider' ? { ...metadata, slides } : metadata;
+    const payloadMetadata = activeTab === 'home_slider'
+      ? { ...metadata, slides }
+      : activeTab === 'explore_pages_nav'
+        ? { ...metadata, nav_links: navLinks }
+        : metadata;
 
     try {
       const res = await fetch(`/api/content/${activeTab}`, {
@@ -232,6 +251,14 @@ export default function AdminContent() {
         >
           <MessageSquare className="w-4 h-4 text-red-500" />
           <span>Dispatch Pit Crew Inquiries ({inquiries.length})</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('explore_pages_nav')}
+          className={`flex items-center space-x-2 py-3 px-6 transition-colors border-b-2 whitespace-nowrap ${activeTab === 'explore_pages_nav' ? 'border-emerald-500 text-emerald-400 bg-zinc-950 font-bold' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
+        >
+          <Layers className="w-4 h-4 text-emerald-400" />
+          <span>Explore Nav Pages ({navLinks.length})</span>
         </button>
 
         <button
@@ -427,7 +454,76 @@ export default function AdminContent() {
             </button>
           </div>
         </form>
-      ) : (
+      ) : activeTab === 'explore_pages_nav' ? (
+        <form onSubmit={handleSave} className="bg-zinc-950 border border-zinc-800 p-8 space-y-6 font-mono text-xs max-w-3xl">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+            <div>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">CUSTOMIZE EXPLORE PAGES NAVIGATION MENU</h2>
+              <p className="text-zinc-400 text-xs mt-1 font-sans">Edit page display labels and optional badge tags shown in the Explore dropdown and side navigation.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNavLinks(DEFAULT_NAV_LINKS)}
+              className="mono-btn-secondary py-1.5 px-3 text-[10px] font-bold"
+            >
+              Reset Defaults
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {navLinks.map((item, idx) => (
+              <div key={item.id || idx} className="bg-zinc-900/60 p-4 border border-zinc-800 rounded-xl space-y-3">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                  <span className="text-xs font-bold text-emerald-400 uppercase font-mono">{item.id || `Link #${idx+1}`}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">Target Route: {item.to}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-zinc-400 text-[10px] uppercase mb-1">Page Display Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={item.label || ''}
+                      onChange={(e) => {
+                        const updated = [...navLinks];
+                        updated[idx] = { ...updated[idx], label: e.target.value };
+                        setNavLinks(updated);
+                      }}
+                      className="w-full mono-input text-xs"
+                      placeholder="e.g. Vehicle Catalog"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-400 text-[10px] uppercase mb-1">Badge Tag (Optional)</label>
+                    <input
+                      type="text"
+                      value={item.badge || ''}
+                      onChange={(e) => {
+                        const updated = [...navLinks];
+                        updated[idx] = { ...updated[idx], badge: e.target.value };
+                        setNavLinks(updated);
+                      }}
+                      className="w-full mono-input text-xs"
+                      placeholder="e.g. HOT, LIVE, PRO"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-4 border-t border-zinc-900">
+            <button
+              type="submit"
+              disabled={saving}
+              className="mono-btn-primary py-3 px-8 font-bold uppercase tracking-widest flex items-center space-x-2 text-xs"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? 'SAVING CHANGES...' : 'SAVE EXPLORE NAVIGATION PAGE NAMES'}</span>
+            </button>
+          </div>
+        </form>
+      ) : activeTab === 'pit_crew_inquiries' || activeTab === 'category_technologies' ? null : (
         <form onSubmit={handleSave} className="bg-zinc-950 border border-zinc-800 p-8 space-y-6 font-mono text-xs max-w-3xl">
           <div>
             <label className="block text-zinc-400 uppercase mb-1">Section Title / Headline</label>
@@ -476,46 +572,311 @@ export default function AdminContent() {
             </div>
           )}
 
-          {activeTab === 'contact_info' && (
-            <div className="space-y-4 pt-4 border-t border-zinc-900">
-              <div className="text-zinc-500 uppercase text-[10px] font-bold">Contact Metadata</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {activeTab === 'about_us' && (
+            <div className="space-y-6 pt-4 border-t border-zinc-900">
+              <div className="text-zinc-400 uppercase text-xs font-bold border-b border-zinc-800 pb-2">
+                1. Quick Statistics Counters (e.g. 12,500+, 450+, 8,200+)
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(metadata.stats || [
+                  { value: '12,500+', label: 'RC VEHICLES DELIVERED' },
+                  { value: '450+', label: 'TRACK RECORDS BROKEN' },
+                  { value: '8,200+', label: 'ACTIVE DRIVERS' }
+                ]).map((stat, idx) => (
+                  <div key={idx} className="bg-zinc-900/60 p-4 border border-zinc-800 rounded-xl space-y-3">
+                    <div className="text-[10px] text-emerald-400 font-bold uppercase">Stat #{idx + 1}</div>
+                    <div>
+                      <label className="block text-zinc-400 text-[10px] uppercase mb-1">Counter Number / Value</label>
+                      <input
+                        type="text"
+                        value={stat.value || ''}
+                        onChange={(e) => {
+                          const currentStats = [...(metadata.stats || [
+                            { value: '12,500+', label: 'RC VEHICLES DELIVERED' },
+                            { value: '450+', label: 'TRACK RECORDS BROKEN' },
+                            { value: '8,200+', label: 'ACTIVE DRIVERS' }
+                          ])];
+                          currentStats[idx] = { ...currentStats[idx], value: e.target.value };
+                          setMetadata({ ...metadata, stats: currentStats });
+                        }}
+                        className="w-full mono-input text-xs font-bold"
+                        placeholder="e.g. 12,500+"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-zinc-400 text-[10px] uppercase mb-1">Description Label</label>
+                      <input
+                        type="text"
+                        value={stat.label || ''}
+                        onChange={(e) => {
+                          const currentStats = [...(metadata.stats || [
+                            { value: '12,500+', label: 'RC VEHICLES DELIVERED' },
+                            { value: '450+', label: 'TRACK RECORDS BROKEN' },
+                            { value: '8,200+', label: 'ACTIVE DRIVERS' }
+                          ])];
+                          currentStats[idx] = { ...currentStats[idx], label: e.target.value };
+                          setMetadata({ ...metadata, stats: currentStats });
+                        }}
+                        className="w-full mono-input text-xs"
+                        placeholder="e.g. RC VEHICLES DELIVERED"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 2. Side Arena Banner Image & Info */}
+              <div className="text-zinc-400 uppercase text-xs font-bold border-b border-zinc-800 pb-2 pt-4">
+                2. Side Arena Banner Photography & Info (Right Column Image)
+              </div>
+              <div className="space-y-4 bg-zinc-900/60 p-4 border border-zinc-800 rounded-xl">
                 <div>
-                  <label className="block text-zinc-400 uppercase mb-1">Support Email</label>
-                  <input
-                    type="email"
-                    value={metadata.email || ''}
-                    onChange={(e) => setMetadata({ ...metadata, email: e.target.value })}
-                    className="w-full mono-input"
-                  />
+                  <label className="block text-zinc-400 uppercase mb-1">Banner Image URL / Upload</label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={metadata.hero_image || '/rc_arena_vision_hero.jpg'}
+                      onChange={(e) => setMetadata({ ...metadata, hero_image: e.target.value })}
+                      className="w-full mono-input text-xs"
+                      placeholder="/rc_arena_vision_hero.jpg or https://..."
+                    />
+                    <label className="mono-btn-secondary px-3 py-2 text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          const formData = new FormData();
+                          formData.append('image', file);
+                          try {
+                            const res = await fetch('/api/upload/image', {
+                              method: 'POST',
+                              headers: { Authorization: `Bearer ${token}` },
+                              body: formData,
+                            });
+                            const data = await res.json();
+                            if (res.ok && data.url) {
+                              setMetadata({ ...metadata, hero_image: data.url });
+                            } else {
+                              alert(data.error || 'Upload failed');
+                            }
+                          } catch (err) {
+                            alert('Upload error');
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-zinc-400 uppercase mb-1">Tagline Badge Text</label>
+                    <input
+                      type="text"
+                      value={metadata.hero_badge || 'OFFICIAL RC ARENA & TELEMETRY PIT HEADQUARTERS — NEPAL'}
+                      onChange={(e) => setMetadata({ ...metadata, hero_badge: e.target.value })}
+                      className="w-full mono-input text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-400 uppercase mb-1">Arena Card Headline</label>
+                    <input
+                      type="text"
+                      value={metadata.hero_title || 'Precision High-Speed Arena & Trackside Diagnostic Bay'}
+                      onChange={(e) => setMetadata({ ...metadata, hero_title: e.target.value })}
+                      className="w-full mono-input text-xs"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-zinc-400 uppercase mb-1">Phone Hotline</label>
-                  <input
-                    type="text"
-                    value={metadata.phone || ''}
-                    onChange={(e) => setMetadata({ ...metadata, phone: e.target.value })}
-                    className="w-full mono-input"
+                  <label className="block text-zinc-400 uppercase mb-1">Arena Description Text</label>
+                  <textarea
+                    rows={3}
+                    value={metadata.hero_description || 'Equipped with live lap timers, telemetry telemetry sensors, sub-millimeter gyro calibration, and 100% genuine replacement parts.'}
+                    onChange={(e) => setMetadata({ ...metadata, hero_description: e.target.value })}
+                    className="w-full mono-input text-xs"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-zinc-400 uppercase mb-1">Physical Address</label>
-                <input
-                  type="text"
-                  value={metadata.address || ''}
-                  onChange={(e) => setMetadata({ ...metadata, address: e.target.value })}
-                  className="w-full mono-input"
-                />
+
+              {/* 3. Precision Fleet & Arena Gallery (2nd Screenshot) */}
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-2 pt-4">
+                <div className="text-zinc-400 uppercase text-xs font-bold">
+                  3. Precision Fleet & Arena Gallery Cards (Screenshot 2)
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentGallery = [...(metadata.gallery || [
+                      { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                      { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                      { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                    ])];
+                    const newCard = {
+                      id: Date.now(),
+                      tag: 'NEW CATEGORY',
+                      title: 'NEW FLEET VEHICLE',
+                      description: 'High-performance RC machine engineered for championship racing.',
+                      image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80'
+                    };
+                    setMetadata({ ...metadata, gallery: [...currentGallery, newCard] });
+                  }}
+                  className="mono-btn-primary py-1.5 px-3 text-[10px] font-bold flex items-center space-x-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Gallery Card</span>
+                </button>
               </div>
-              <div>
-                <label className="block text-zinc-400 uppercase mb-1">Operating Hours</label>
-                <input
-                  type="text"
-                  value={metadata.hours || ''}
-                  onChange={(e) => setMetadata({ ...metadata, hours: e.target.value })}
-                  className="w-full mono-input"
-                />
+
+              <div className="space-y-4">
+                {(metadata.gallery || [
+                  { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                  { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                  { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                ]).map((card, idx) => (
+                  <div key={card.id || idx} className="bg-zinc-900/60 p-4 border border-zinc-800 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                      <span className="text-xs font-bold text-emerald-400 uppercase font-mono">Gallery Card #{idx + 1} — {card.title || 'Untitled'}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentGallery = [...(metadata.gallery || [
+                            { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                            { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                            { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                          ])];
+                          const updated = currentGallery.filter((_, i) => i !== idx);
+                          setMetadata({ ...metadata, gallery: updated });
+                        }}
+                        className="text-red-400 hover:text-red-300 text-xs font-mono flex items-center space-x-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-zinc-400 text-[10px] uppercase mb-1">Badge Tag</label>
+                        <input
+                          type="text"
+                          value={card.tag || ''}
+                          onChange={(e) => {
+                            const current = [...(metadata.gallery || [
+                              { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                              { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                              { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                            ])];
+                            current[idx] = { ...current[idx], tag: e.target.value };
+                            setMetadata({ ...metadata, gallery: current });
+                          }}
+                          className="w-full mono-input text-xs"
+                          placeholder="e.g. OFF-ROAD 4WD"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-zinc-400 text-[10px] uppercase mb-1">Card Headline Title</label>
+                        <input
+                          type="text"
+                          value={card.title || ''}
+                          onChange={(e) => {
+                            const current = [...(metadata.gallery || [
+                              { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                              { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                              { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                            ])];
+                            current[idx] = { ...current[idx], title: e.target.value };
+                            setMetadata({ ...metadata, gallery: current });
+                          }}
+                          className="w-full mono-input text-xs"
+                          placeholder="e.g. APEX OFF-ROAD BUGGIES"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-400 text-[10px] uppercase mb-1">Card Image URL / File Upload</label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          value={card.image_url || ''}
+                          onChange={(e) => {
+                            const current = [...(metadata.gallery || [
+                              { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                              { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                              { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                            ])];
+                            current[idx] = { ...current[idx], image_url: e.target.value };
+                            setMetadata({ ...metadata, gallery: current });
+                          }}
+                          className="w-full mono-input text-xs"
+                          placeholder="https://..."
+                        />
+                        <label className="mono-btn-secondary px-3 py-2 text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              const formData = new FormData();
+                              formData.append('image', file);
+                              try {
+                                const res = await fetch('/api/upload/image', {
+                                  method: 'POST',
+                                  headers: { Authorization: `Bearer ${token}` },
+                                  body: formData,
+                                });
+                                const data = await res.json();
+                                if (res.ok && data.url) {
+                                  const current = [...(metadata.gallery || [
+                                    { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                                    { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                                    { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                                  ])];
+                                  current[idx] = { ...current[idx], image_url: data.url };
+                                  setMetadata({ ...metadata, gallery: current });
+                                } else {
+                                  alert(data.error || 'Upload failed');
+                                }
+                              } catch (err) {
+                                alert('Upload error');
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-400 text-[10px] uppercase mb-1">Card Description</label>
+                      <textarea
+                        rows={2}
+                        value={card.description || ''}
+                        onChange={(e) => {
+                          const current = [...(metadata.gallery || [
+                            { id: 1, tag: 'OFF-ROAD 4WD', title: 'APEX OFF-ROAD BUGGIES', description: '65+ MPH 3660 brushless motors with oil-filled aluminum dampers built for dirt jumps and dirt tracks.', image_url: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&w=800&q=80' },
+                            { id: 2, tag: '1/10 RWD DRIFT', title: 'TOKYO SPEC DRIFT CARS', description: 'Precision gyro-assisted counter-steer chassis engineered for smooth concrete drifting.', image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80' },
+                            { id: 3, tag: '6S BASHING TRUCKS', title: 'TITAN CRUSHER BASHING TRUCKS', description: 'Heavy-duty steel drive shafts and massive rubber tires built for extreme double backflips.', image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' }
+                          ])];
+                          current[idx] = { ...current[idx], description: e.target.value };
+                          setMetadata({ ...metadata, gallery: current });
+                        }}
+                        className="w-full mono-input text-xs"
+                        placeholder="Card description text..."
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

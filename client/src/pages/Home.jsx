@@ -172,7 +172,11 @@ export default function Home({ onOpenAuthModal }) {
                   <PriceDisplay product={prod} size="sm" />
                 </div>
 
-                {user && user.role === 'admin' ? (
+                {prod.stock <= 0 ? (
+                  <span className="py-2 px-3 text-[10px] font-bold font-mono text-red-400 bg-red-950/60 border border-red-800 uppercase tracking-wide">
+                    OUT OF STOCK
+                  </span>
+                ) : user && user.role === 'admin' ? (
                   <Link
                     to={`/admin/products?edit=${prod.id}`}
                     className="mono-btn-secondary py-2 px-4 text-xs font-bold border-white text-white flex items-center space-x-1"
