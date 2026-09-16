@@ -195,37 +195,18 @@ export default function BuyerProfile({ onOpenAuthModal }) {
                   {isExpanded && (
                     <div className="p-5 border-t border-zinc-900 bg-zinc-900/40 space-y-4">
                       <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
-                        <div className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">BOOKED VEHICLES & RECEIPT TELEMETRY</div>
-                        {(() => {
-                          const receiptUrl = (order.payment_screenshot && !order.payment_screenshot.includes('fonepay_qr'))
-                            ? order.payment_screenshot
-                            : '/images/sample-buyer-receipt.jpg';
-                          return (
-                            <div className="flex items-center space-x-2">
-                              <img
-                                src={receiptUrl}
-                                alt="Receipt Thumbnail"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedReceiptOrder(order);
-                                }}
-                                className="w-8 h-8 object-cover bg-black border border-emerald-800 hover:border-emerald-400 cursor-pointer transition rounded-sm shrink-0"
-                                title="Click to view full receipt modal"
-                              />
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedReceiptOrder(order);
-                                }}
-                                className="bg-zinc-900 hover:bg-zinc-800 text-emerald-400 border border-emerald-800 hover:border-emerald-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all flex items-center space-x-1.5 cursor-pointer shadow-md"
-                              >
-                                <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>VIEW PAYMENT RECEIPT</span>
-                              </button>
-                            </div>
-                          );
-                        })()}
+                        <div className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">BOOKED VEHICLES</div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedReceiptOrder(order);
+                          }}
+                          className="bg-zinc-900 hover:bg-zinc-800 text-emerald-400 border border-emerald-800 hover:border-emerald-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all flex items-center space-x-1.5 cursor-pointer shadow-md"
+                        >
+                          <Package className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>VIEW RECEIPT</span>
+                        </button>
                       </div>
                       
                       <div className="space-y-3">
@@ -322,50 +303,6 @@ export default function BuyerProfile({ onOpenAuthModal }) {
                 );
               })}
             </div>
-
-            {/* Uploaded Buyer Payment Screenshot Proof Section */}
-            {(() => {
-              const receiptUrl = (selectedReceiptOrder.payment_screenshot && !selectedReceiptOrder.payment_screenshot.includes('fonepay_qr'))
-                ? selectedReceiptOrder.payment_screenshot
-                : '/images/sample-buyer-receipt.jpg';
-              return (
-                <div className="bg-zinc-900/40 border border-emerald-800/60 p-4 space-y-3 rounded-sm">
-                  <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-                    <span className="text-[10px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
-                      <ImageIcon className="w-3.5 h-3.5" /> BUYER UPLOADED PAYMENT SCREENSHOT PROOF
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const win = window.open();
-                        if (win) {
-                          win.document.write(`<img src="${receiptUrl}" style="max-width:100%;height:auto;margin:auto;display:block;background:#000;" />`);
-                        }
-                      }}
-                      className="text-[10px] text-zinc-400 hover:text-white flex items-center space-x-1 underline uppercase"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span>OPEN FULL TAB</span>
-                    </button>
-                  </div>
-
-                  <div className="max-h-64 overflow-auto bg-black border border-zinc-900 flex items-center justify-center p-2">
-                    <img src={receiptUrl} alt="Buyer Payment Receipt" className="max-h-56 object-contain" />
-                  </div>
-
-                  <div className="flex justify-end space-x-2 pt-1">
-                    <a
-                      href={receiptUrl}
-                      download={`receipt-${selectedReceiptOrder.order_number}.png`}
-                      className="mono-btn-primary py-1.5 px-3 text-[10px] uppercase font-bold flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-500 text-black border-emerald-500"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>DOWNLOAD RECEIPT</span>
-                    </a>
-                  </div>
-                </div>
-              );
-            })()}
 
             <div className="pt-2">
               <button
